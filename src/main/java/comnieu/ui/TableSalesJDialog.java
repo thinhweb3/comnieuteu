@@ -1,4 +1,8 @@
 package comnieu.ui;
+import comnieu.entity.Bill;
+import comnieu.dao.BillDAO;
+import comnieu.dao.impl.BillDAOImpl;
+import java.util.Date;
 
 import comnieu.dao.DiningTableDAO;
 import comnieu.dao.impl.DiningTableDAOImpl;
@@ -70,10 +74,33 @@ public class TableSalesJDialog extends JDialog {
         return btn;
     }
 
-    private void showOrderDialog(int tableId) {
-        JOptionPane.showMessageDialog(this, "Bàn #" + tableId + " được chọn");
-        // TODO: mở hóa đơn tương ứng
+private void showOrderDialog(int tableId) {
+    try {
+        BillDAO billDao = new BillDAOImpl();
+        Bill bill = billDao.findUnpaidByTableId((long) tableId);
+
+        if (bill == null) {
+            // Tạo hóa đơn mới
+            bill = new Bill();
+        bill.setTableId(tableId);                  // nếu tableId là int
+        bill.setEmployeeId((int) 1L);              // ép kiểu rõ ràng
+
+            bill.setStatus(0); // Chưa thanh toán
+            bill = billDao.create(bill); // tạo và nhận lại bill có id
+        }
+
+        // Mở giao diện hóa đơn
+        BillJDialog dialog = new BillJDialog(this, true);
+        dialog.setBill(bill);
+        dialog.setVisible(true);
+
+        // Sau khi đóng hóa đơn, load lại bảng
+        loadTables();
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "❌ Lỗi khi mở hóa đơn: " + e.getMessage());
     }
+}
+
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new TableSalesJDialog().setVisible(true));

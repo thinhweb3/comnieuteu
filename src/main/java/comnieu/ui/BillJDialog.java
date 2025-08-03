@@ -8,13 +8,18 @@ import comnieu.ui.BillController;
 import comnieu.dao.BillDAO;
 import comnieu.dao.BillDetailDAO;
 import comnieu.dao.DiningTableDAO;
+import comnieu.dao.DishDAO;
 import comnieu.dao.EmployeeDAO;
 import comnieu.dao.impl.BillDAOImpl;
 import comnieu.dao.impl.BillDetailDAOImpl;
 import comnieu.dao.impl.DiningTableDAOImpl;
+import comnieu.dao.impl.DishDAOImpl;
 import comnieu.dao.impl.EmployeeDAOImpl;
 import comnieu.entity.Bill;
 import comnieu.entity.BillDetail;
+import comnieu.entity.DiningTable;
+import comnieu.entity.Dish;
+import comnieu.ui.BillController;
 import comnieu.util.XDate;
 import comnieu.util.XDialog;
 import java.awt.Dialog;
@@ -27,6 +32,7 @@ import javax.swing.table.DefaultTableModel;
  * @author Admin
  */
 public class BillJDialog extends JDialog implements BillController { 
+    private DishDAO dishDAO = new DishDAOImpl();
     private Bill bill;
     private final BillDAO billDao = new BillDAOImpl();
     private final BillDetailDAO billDetailDao = new BillDetailDAOImpl();
@@ -101,17 +107,17 @@ public BillJDialog(Dialog owner, boolean modal) {
 
         tblBillDetails.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null}
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null}
             },
             new String [] {
-                "", "Mã phiếu", "Đồ Uống", "Đơn giá ", "Giảm giá", "Số lượng", "thành tiền"
+                "Món Ăn", "Đơn giá ", "Giảm giá", "Số lượng", "thành tiền", ""
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.Boolean.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class
+                java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Boolean.class
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -318,7 +324,7 @@ public void removeDrinks() {
 
 @Override
 public void showDrinkJDialog() {
-    DrinkJDialog dialog = new DrinkJDialog(this, true); // ✅ Dùng chính BillJDialog làm owner
+    DishJDialog dialog = new DishJDialog(this, true); // ✅ Dùng chính BillJDialog làm owner
     dialog.setBill(bill);
     dialog.setVisible(true);
     dialog.addWindowListener(new java.awt.event.WindowAdapter() {
@@ -335,7 +341,7 @@ public void updateQuantity() {
             String input = XDialog.prompt("Số lượng mới?");
             if (input != null && input.length() > 0) {
                 int newQuantity = Integer.parseInt(input);
-                BillDetail detail = billDetails.get(tblBillDetails.getSelectedRow());
+                BillDetail detail = details.get(tblBillDetails.getSelectedRow());
                 detail.setQuantity(newQuantity);
                 billDetailDao.update(detail);
                 this.fillBillDetails();
@@ -351,7 +357,7 @@ public void checkout() {
     try {
         if (XDialog.confirm("Bạn muốn thanh toán phiếu bán hàng?")) {
             bill.setStatus(Bill.BillStatus.Completed.getValue());
-            bill.setCheckout(new Date());
+            bill.setCheckOut(new Date());
             billDao.update(bill);
             this.setForm(bill);
         }
@@ -363,7 +369,7 @@ public void checkout() {
 @Override 
 public void cancel() {
     try {
-        if (billDetails.isEmpty()) {
+        if (details.isEmpty()) {
             billDao.deleteById(bill.getId());
             this.dispose();
         } else if (XDialog.confirm("Bạn muốn hủy phiếu bán hàng?")) {
@@ -378,21 +384,21 @@ public void cancel() {
 
 void setForm(Bill bill) {
     txtId.setText(String.valueOf(bill.getId())); 
-    txtCardId.setText("Card #" + bill.getCardId()); 
-    txtCheckin.setText(XDate.format(bill.getCheckin(), "HH:mm:ss dd-MM-yyyy")); 
-    txtUsername.setText(bill.getUsername()); 
+    txtCardId.setText("Bàn #" + bill.getTableId());
+    txtCheckin.setText(XDate.format(bill.getCheckIn(), "HH:mm:ss dd-MM-yyyy")); 
+    txtUsername.setText(employeeDao.findById(bill.getEmployeeId()).getUsername());
     String[] statuses = {"Servicing", "Completed", "Canceled"}; 
     txtStatus.setText(statuses[bill.getStatus()]); 
-    if (bill.getCheckout() != null) { 
-        txtCheckout.setText(XDate.format(bill.getCheckout(), "HH:mm:ss dd-MM-yyyy")); 
+    if (bill.getCheckOut() != null) { 
+        txtCheckout.setText(XDate.format(bill.getCheckOut(), "HH:mm:ss dd-MM-yyyy")); 
     }
 
     // 🔒 Kiểm tra trạng thái của Card
-    CardDAO cardDao = new CardDAOImpl();
-    Card card = cardDao.findById(bill.getCardId());
+DiningTableDAO tableDao = new DiningTableDAOImpl();
+DiningTable table = tableDao.findById(bill.getTableId());
 
-    // true nếu được phép thao tác (phiếu chưa thanh toán và thẻ ở trạng thái bình thường)
-    boolean editable = (bill.getStatus() == 0) && (card != null && card.getStatus() == 0);
+boolean editable = (bill.getStatus() == 0) && (table != null && table.getStatus() == 0);
+
 
     btnAdd.setEnabled(editable); 
     btnCancel.setEnabled(editable); 
@@ -419,42 +425,41 @@ void setForm(Bill bill) {
     private javax.swing.JTextField txtStatus;
     private javax.swing.JTextField txtUsername;
     // End of variables declaration//GEN-END:variables
-@Override
-public void fillBillDetails() {
-    String idText = txtId.getText();
-    if (idText == null || idText.trim().isEmpty()) {
-        details = List.of();
-        ((DefaultTableModel) tblBillDetails.getModel()).setRowCount(0);
-        return;
-    }
-
-    try {
-        Long billId = Long.parseLong(idText);
-        details = billDetailDao.findByBillId(billId);
-
-        DefaultTableModel model = (DefaultTableModel) tblBillDetails.getModel();
-        model.setRowCount(0);
-        for (BillDetail d : details) {
-            Object[] row = {
-                false,
-                d.getBillId(),
-                d.getDrink().getName(),
-                d.getUnitPrice(),
-                d.getDiscount(),
-                d.getQuantity(),
-                d.getTotal()
-            };
-            model.addRow(row);
+   @Override
+    public void fillBillDetails() {
+        String idText = txtId.getText();
+        if (idText == null || idText.trim().isEmpty()) {
+            details = List.of();
+            ((DefaultTableModel) tblBillDetails.getModel()).setRowCount(0);
+            return;
         }
-    } catch (NumberFormatException ex) {
-        XDialog.alert("Mã phiếu không hợp lệ: " + idText);
-        ((DefaultTableModel) tblBillDetails.getModel()).setRowCount(0);
-    } catch (Exception e) {
-        XDialog.alert("Lỗi khi tải chi tiết phiếu: " + e.getMessage());
-        ((DefaultTableModel) tblBillDetails.getModel()).setRowCount(0);
-    }
-}
 
+        try {
+            Long billId = Long.parseLong(idText);
+            details = billDetailDao.findByBillId(billId);
+
+
+            DefaultTableModel model = (DefaultTableModel) tblBillDetails.getModel();
+            model.setRowCount(0);
+            for (BillDetail d : details) {
+                Dish dish = dishDAO.findById(d.getDishId());
+                Object[] row = {
+                    dish != null ? dish.getName() : "",
+                    d.getUnitPrice(),
+                    "", // discount chưa có
+                    d.getQuantity(),
+                    d.getUnitPrice().multiply(new java.math.BigDecimal(d.getQuantity()))
+                };
+                model.addRow(row);
+            }
+        } catch (NumberFormatException ex) {
+            XDialog.alert("Mã phiếu không hợp lệ: " + idText);
+            ((DefaultTableModel) tblBillDetails.getModel()).setRowCount(0);
+        } catch (Exception e) {
+            XDialog.alert("Lỗi khi tải chi tiết phiếu: " + e.getMessage());
+            ((DefaultTableModel) tblBillDetails.getModel()).setRowCount(0);
+        }
+    }
 
 @Override
 public void open() {
