@@ -4,6 +4,8 @@ import comnieu.dao.ImportReceiptDAO;
 import comnieu.entity.ImportReceipt;
 import comnieu.util.XJdbc;
 import comnieu.util.XQuery;
+import java.time.LocalDate;
+import java.util.Date;
 
 import java.util.List;
 
@@ -13,6 +15,7 @@ import java.util.List;
  * @author Admin
  */
 public class ImportReceiptDAOImpl implements ImportReceiptDAO {
+    final String findByDateRangeSql = "SELECT * FROM ImportReceipt WHERE CONVERT(DATE, ImportDate) BETWEEN ? AND ?";
 
     final String insertSql = """
         INSERT INTO ImportReceipt (ImportDate, SupplierId, EmployeeId)
@@ -78,4 +81,13 @@ public class ImportReceiptDAOImpl implements ImportReceiptDAO {
     public List<ImportReceipt> findByEmployeeId(Integer employeeId) {
         return XQuery.getBeanList(ImportReceipt.class, findByEmployeeIdSql, employeeId);
     }
+@Override
+public List<ImportReceipt> findByDateRange(LocalDate from, LocalDate to) {
+    final String sql = "SELECT * FROM ImportReceipt WHERE ImportDate BETWEEN ? AND ?";
+    Date sqlFrom = java.sql.Date.valueOf(from);
+    Date sqlTo   = java.sql.Date.valueOf(to);
+    return XQuery.getBeanList(ImportReceipt.class, sql, sqlFrom, sqlTo);
+}
+
+
 }

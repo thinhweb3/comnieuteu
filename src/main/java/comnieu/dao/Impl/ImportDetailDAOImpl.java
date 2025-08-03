@@ -4,6 +4,8 @@ import comnieu.dao.ImportDetailDAO;
 import comnieu.entity.ImportDetail;
 import comnieu.util.XJdbc;
 import comnieu.util.XQuery;
+import java.sql.ResultSet;
+import java.util.ArrayList;
 
 import java.util.List;
 
@@ -73,10 +75,34 @@ public class ImportDetailDAOImpl implements ImportDetailDAO {
         return XQuery.getSingleBean(ImportDetail.class, findByIdSql, id);
     }
 
-    @Override
-    public List<ImportDetail> findByImportReceiptId(Long importReceiptId) {
-        return XQuery.getBeanList(ImportDetail.class, findByImportReceiptIdSql, importReceiptId);
+@Override
+public List<ImportDetail> findByImportReceiptId(Long importReceiptId) {
+    String sql = "SELECT * FROM ImportDetail WHERE ImportReceiptId = ?";
+    List<ImportDetail> list = new ArrayList<>();
+
+    try {
+        ResultSet rs = XJdbc.executeQuery(sql, importReceiptId);
+        while (rs.next()) {
+            ImportDetail d = new ImportDetail();
+            d.setId(rs.getLong("Id"));
+            d.setImportReceiptId(rs.getLong("ImportReceiptId"));
+            d.setIngredientId(rs.getInt("IngredientId"));
+            d.setQuantity(rs.getObject("Quantity") != null ? rs.getFloat("Quantity") : 0f);
+            d.setUnit(rs.getString("Unit"));
+            d.setUnitPrice(rs.getBigDecimal("UnitPrice"));
+            list.add(d);
+        }
+        rs.getStatement().getConnection().close(); // Đóng connection nếu bạn không dùng try-with-resources
+    } catch (Exception e) {
+        throw new RuntimeException("❌ Lỗi khi truy vấn ImportDetail: " + e.getMessage(), e);
     }
+
+    return list;
+}
+
+
+
+
 
     @Override
     public List<ImportDetail> findByIngredientId(Integer ingredientId) {
