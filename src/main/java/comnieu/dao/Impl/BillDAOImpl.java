@@ -125,4 +125,10 @@ public class BillDAOImpl implements BillDAO {
     public List<Bill> findByUserAndTimeRange(String username, Date begin, Date end) {
         return XQuery.getBeanList(Bill.class, findByUserAndTimeRangeSql, username, begin, end);
     }
+    @Override
+public Bill findUnpaidByTableId(Long tableId) {
+    String sql = "SELECT * FROM Bill WHERE TableId = ? AND Status = 0";
+    return XQuery.getSingleBean(Bill.class, sql, tableId);
+}
+
 }
