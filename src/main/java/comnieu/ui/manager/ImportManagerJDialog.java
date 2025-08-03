@@ -4,51 +4,50 @@
  */
 package comnieu.ui.manager;
 
-import comnieu.controller.BillController;
 import comnieu.dao.*;
 import comnieu.dao.impl.*;
 import comnieu.entity.*;
-import comnieu.util.*;
+import comnieu.util.XDialog;
+import comnieu.util.XStr;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
+import java.awt.event.*;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+
 
 /**
  *
  * @author Admin
  */
-public class BillManagerJDialog extends JDialog implements BillController  {
-        private BillDAO billDAO = new BillDAOImpl();
-    private BillDetailDAO billDetailDAO = new BillDetailDAOImpl();
-    private DishDAO dishDAO = new DishDAOImpl();
-    private DiningTableDAO tableDAO = new DiningTableDAOImpl();
+public class ImportManagerJDialog extends JDialog implements ImportReceiptController {
+    private ImportReceiptDAO receiptDAO = new ImportReceiptDAOImpl();
+    private ImportDetailDAO detailDAO = new ImportDetailDAOImpl();
+    private SupplierDAO supplierDAO = new SupplierDAOImpl();
     private EmployeeDAO employeeDAO = new EmployeeDAOImpl();
+    private IngredientDAO ingredientDAO = new IngredientDAOImpl();
+    private List<ImportReceipt> receipts = new ArrayList<>();
 
-    private List<Bill> items = List.of();
-    private List<BillDetail> details = List.of();
+
+    private List<ImportDetail> details = List.of();
+    
 private javax.swing.ButtonGroup bgStatus; 
     /**
      * Creates new form BillManagerJDialog
      */
-    public BillManagerJDialog() {
+public ImportManagerJDialog() {
         initComponents();
-        bgStatus = new javax.swing.ButtonGroup();
-
-bgStatus.add(rdoService);
-bgStatus.add(rdoCanceled);
-bgStatus.add(rdoCompleted);
-    tblBills.getSelectionModel()
-                 .addListSelectionListener(e -> {
-                     if (!e.getValueIsAdjusting()              // sự kiện đã ổn định
-                             && tblBills.getSelectedRow() >= 0) {
-                         edit();                               // bật nút Update/Xoá & Move
-                     }
-                 });
+        tblImport.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting() && tblImport.getSelectedRow() >= 0) {
+                edit();
+            }
+        });
+        cboTimeRanges.addActionListener(e -> selectTimeRange());
     }
     
     /**
@@ -64,7 +63,7 @@ bgStatus.add(rdoCompleted);
         tabs = new javax.swing.JTabbedPane();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        tblBills = new javax.swing.JTable();
+        tblImport = new javax.swing.JTable();
         btnUncheckAll = new javax.swing.JButton();
         btnDeleteCheckedItems = new javax.swing.JButton();
         btnCheckAll = new javax.swing.JButton();
@@ -75,7 +74,7 @@ bgStatus.add(rdoCompleted);
         btnFilter = new javax.swing.JButton();
         cboTimeRanges = new javax.swing.JComboBox<>();
         jPanel1 = new javax.swing.JPanel();
-        txtIdBill = new javax.swing.JTextField();
+        txtImportId = new javax.swing.JTextField();
         Jlabel2 = new javax.swing.JLabel();
         btnCreate = new javax.swing.JButton();
         btnUpdate = new javax.swing.JButton();
@@ -86,16 +85,12 @@ bgStatus.add(rdoCompleted);
         btnMoveLast = new javax.swing.JButton();
         btnMoveNext = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        rdoService = new javax.swing.JRadioButton();
-        rdoCompleted = new javax.swing.JRadioButton();
-        rdoCanceled = new javax.swing.JRadioButton();
-        txtTableNumber = new javax.swing.JTextField();
-        txtCreateTime = new javax.swing.JTextField();
-        txtPayTime = new javax.swing.JTextField();
         txtEmployeeId = new javax.swing.JTextField();
+        txtImportDate = new javax.swing.JTextField();
+        txtSupplierId = new javax.swing.JTextField();
+        txtSupplierName = new javax.swing.JTextField();
         jScrollPane2 = new javax.swing.JScrollPane();
-        tblBillDetail = new javax.swing.JTable();
+        tblImportDetail = new javax.swing.JTable();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
@@ -108,7 +103,7 @@ bgStatus.add(rdoCompleted);
             }
         });
 
-        tblBills.setModel(new javax.swing.table.DefaultTableModel(
+        tblImport.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null, null, null, null},
                 {null, null, null, null, null, null, null},
@@ -116,7 +111,7 @@ bgStatus.add(rdoCompleted);
                 {null, null, null, null, null, null, null}
             },
             new String [] {
-                "Mã Phiếu", "Thẻ Số", "Thời điểm tạo", "Thời điểm thanh toán", "Trạng thái", "Gmail", ""
+                "Mã Phiếu", "Ngày Nhập", "Mã Nhà Cung Cấp", "Nhà Cung Cấp", "Mã Nhân Viên", "Tên Nhân Viên", ""
             }
         ) {
             Class[] types = new Class [] {
@@ -127,12 +122,12 @@ bgStatus.add(rdoCompleted);
                 return types [columnIndex];
             }
         });
-        tblBills.addMouseListener(new java.awt.event.MouseAdapter() {
+        tblImport.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                tblBillsMouseClicked(evt);
+                tblImportMouseClicked(evt);
             }
         });
-        jScrollPane1.setViewportView(tblBills);
+        jScrollPane1.setViewportView(tblImport);
 
         btnUncheckAll.setText("Bỏ chọn tất cả");
         btnUncheckAll.addActionListener(new java.awt.event.ActionListener() {
@@ -216,6 +211,12 @@ bgStatus.add(rdoCompleted);
 
         tabs.addTab("Danh sách", jPanel2);
 
+        txtImportId.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtImportIdActionPerformed(evt);
+            }
+        });
+
         btnCreate.setText("Tạo mới");
         btnCreate.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -274,39 +275,34 @@ bgStatus.add(rdoCompleted);
 
         jLabel1.setText("Mã Phiếu");
 
-        jLabel2.setText("Trạng Thái");
-
-        rdoService.setText("Service");
-        rdoService.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                rdoServiceActionPerformed(evt);
-            }
-        });
-
-        rdoCompleted.setText("Completed");
-
-        rdoCanceled.setText("Canceled");
-
-        tblBillDetail.setModel(new javax.swing.table.DefaultTableModel(
+        tblImportDetail.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null},
-                {null, null, null, null, null},
-                {null, null, null, null, null},
-                {null, null, null, null, null}
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null},
+                {null, null, null, null, null, null}
             },
             new String [] {
-                "Đồ ăn", "Đơn giá", "Giảm giá", "Số lượng", "Thành tiền"
+                "Nguyên Liệu", "Đơn giá", "Số lượng", "Đơn vị", "Thành tiền", ""
             }
-        ));
-        jScrollPane2.setViewportView(tblBillDetail);
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Object.class, java.lang.Boolean.class
+            };
 
-        jLabel3.setText("Thẻ số");
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+        });
+        jScrollPane2.setViewportView(tblImportDetail);
 
-        jLabel4.setText("Thời điểm tạo");
+        jLabel3.setText("Mã Nhân Viên");
 
-        jLabel5.setText("Thời điểm thanh toán");
+        jLabel4.setText("Ngày Nhập");
 
-        jLabel6.setText("Email");
+        jLabel5.setText("Mã Nhà Cung Cấp");
+
+        jLabel6.setText("Tên Nhà Cung Cấp");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -339,39 +335,37 @@ bgStatus.add(rdoCompleted);
                                 .addComponent(Jlabel2))
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addContainerGap()
-                                .addComponent(txtIdBill, javax.swing.GroupLayout.PREFERRED_SIZE, 258, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(txtImportId, javax.swing.GroupLayout.PREFERRED_SIZE, 258, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel3)
-                                    .addComponent(txtTableNumber, javax.swing.GroupLayout.PREFERRED_SIZE, 258, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                    .addComponent(txtEmployeeId, javax.swing.GroupLayout.PREFERRED_SIZE, 258, javax.swing.GroupLayout.PREFERRED_SIZE))))
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addContainerGap()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                .addGap(0, 0, Short.MAX_VALUE)
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(txtCreateTime, javax.swing.GroupLayout.PREFERRED_SIZE, 258, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jLabel4))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(txtPayTime, javax.swing.GroupLayout.PREFERRED_SIZE, 258, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                                        .addComponent(jLabel5)
-                                        .addGap(212, 212, 212))))
-                            .addComponent(jLabel1)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(jPanel1Layout.createSequentialGroup()
-                                        .addComponent(rdoService)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(rdoCompleted)
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(rdoCanceled))
-                                    .addComponent(jLabel2))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addGap(0, 6, Short.MAX_VALUE)
+                                        .addComponent(jLabel4)
+                                        .addGap(204, 204, 204))
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addComponent(txtImportDate, javax.swing.GroupLayout.PREFERRED_SIZE, 252, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(txtEmployeeId, javax.swing.GroupLayout.PREFERRED_SIZE, 258, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addComponent(jLabel5)
+                                        .addGap(212, 212, 212))
+                                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                                        .addComponent(txtSupplierId, javax.swing.GroupLayout.PREFERRED_SIZE, 274, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(51, 51, 51))))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(jLabel1)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(txtSupplierName, javax.swing.GroupLayout.PREFERRED_SIZE, 258, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(jLabel6))
                                 .addGap(67, 67, 67)))))
                 .addContainerGap())
@@ -385,30 +379,22 @@ bgStatus.add(rdoCompleted);
                     .addComponent(jLabel3))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtIdBill, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txtTableNumber, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(txtImportId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtEmployeeId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(14, 14, 14)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
                     .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtPayTime, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txtCreateTime, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(txtSupplierId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtImportDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel2)
-                    .addComponent(jLabel6, javax.swing.GroupLayout.Alignment.TRAILING))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel6)
+                .addGap(7, 7, 7)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(rdoCompleted)
-                            .addComponent(rdoService)
-                            .addComponent(rdoCanceled))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(Jlabel2))
-                    .addComponent(txtEmployeeId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(Jlabel2)
+                    .addComponent(txtSupplierName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 25, Short.MAX_VALUE)
@@ -451,14 +437,14 @@ bgStatus.add(rdoCompleted);
           this.open(); 
     }//GEN-LAST:event_formWindowOpened
 
-    private void tblBillsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblBillsMouseClicked
+    private void tblImportMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblImportMouseClicked
         // TODO add your handling code here:
          if (evt.getClickCount() == 2) { 
             this.edit(); 
  
  
         } 
-    }//GEN-LAST:event_tblBillsMouseClicked
+    }//GEN-LAST:event_tblImportMouseClicked
 
     private void btnCheckAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCheckAllActionPerformed
         // TODO add your handling code here:
@@ -515,311 +501,249 @@ bgStatus.add(rdoCompleted);
         this.moveLast();
     }//GEN-LAST:event_btnMoveLastActionPerformed
 
-    private void rdoServiceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdoServiceActionPerformed
+    private void txtImportIdActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtImportIdActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_rdoServiceActionPerformed
+    }//GEN-LAST:event_txtImportIdActionPerformed
     BillDAO dao = new BillDAOImpl(); // chuẩn hóa biến tên dao
     BillDetailDAO billDetailDao = new BillDetailDAOImpl(); // dùng đúng chuẩn của comnieu DAO
 
     
  
-@Override 
-    public void open() { 
-    this.setLocationRelativeTo(null); 
-    this.selectTimeRange(); 
-    this.clear(); 
-} 
-@Override
-public void selectTimeRange() {
-    String option = (String) cboTimeRanges.getSelectedItem();
-    LocalDate today = LocalDate.now();
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-
-    switch (option) {
-        case "Hôm nay":
-            txtStartDate.setText(today.format(formatter));
-            txtEndDate.setText(today.format(formatter));
-            break;
-        case "Tuần này":
-            LocalDate monday = today.with(DayOfWeek.MONDAY);
-            LocalDate sunday = today.with(DayOfWeek.SUNDAY);
-            txtStartDate.setText(monday.format(formatter));
-            txtEndDate.setText(sunday.format(formatter));
-            break;
-        case "Tháng này":
-            LocalDate firstDay = today.withDayOfMonth(1);
-            LocalDate lastDay = today.withDayOfMonth(today.lengthOfMonth());
-            txtStartDate.setText(firstDay.format(formatter));
-            txtEndDate.setText(lastDay.format(formatter));
-            break;
-        case "Quý này":
-            int month = today.getMonthValue();
-            int quarter = (month - 1) / 3 + 1;
-            LocalDate quarterStart = LocalDate.of(today.getYear(), (quarter - 1) * 3 + 1, 1);
-            LocalDate quarterEnd = quarterStart.plusMonths(3).minusDays(1);
-            txtStartDate.setText(quarterStart.format(formatter));
-            txtEndDate.setText(quarterEnd.format(formatter));
-            break;
-        case "Năm nay":
-            LocalDate startYear = today.withDayOfYear(1);
-            LocalDate endYear = today.withMonth(12).withDayOfMonth(31);
-            txtStartDate.setText(startYear.format(formatter));
-            txtEndDate.setText(endYear.format(formatter));
-            break;
-        default:
-            break;
+ @Override
+    public void open() {
+        this.setLocationRelativeTo(null);
+        selectTimeRange();
+        clear();
     }
-}
 
-@Override
+    @Override
+    public void selectTimeRange() {
+        String option = (String) cboTimeRanges.getSelectedItem();
+        LocalDate today = LocalDate.now();
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+        switch (option) {
+            case "Hôm nay" -> {
+                txtStartDate.setText(today.format(fmt));
+                txtEndDate.setText(today.format(fmt));
+            }
+            case "Tuần này" -> {
+                txtStartDate.setText(today.with(DayOfWeek.MONDAY).format(fmt));
+                txtEndDate.setText(today.with(DayOfWeek.SUNDAY).format(fmt));
+            }
+            case "Tháng này" -> {
+                txtStartDate.setText(today.withDayOfMonth(1).format(fmt));
+                txtEndDate.setText(today.withDayOfMonth(today.lengthOfMonth()).format(fmt));
+            }
+            case "Quý này" -> {
+                int quarter = (today.getMonthValue() - 1) / 3 + 1;
+                LocalDate start = LocalDate.of(today.getYear(), (quarter - 1) * 3 + 1, 1);
+                LocalDate end = start.plusMonths(3).minusDays(1);
+                txtStartDate.setText(start.format(fmt));
+                txtEndDate.setText(end.format(fmt));
+            }
+            case "Năm nay" -> {
+                txtStartDate.setText(today.withDayOfYear(1).format(fmt));
+                txtEndDate.setText(today.withMonth(12).withDayOfMonth(31).format(fmt));
+            }
+        }
+    }
+
+    @Override
     public void fillToTable() {
-        DefaultTableModel model = (DefaultTableModel) tblBills.getModel();
+        DefaultTableModel model = (DefaultTableModel) tblImport.getModel();
         model.setRowCount(0);
 
         try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-            LocalDate start = LocalDate.parse(txtStartDate.getText().trim(), formatter);
-            LocalDate end = LocalDate.parse(txtEndDate.getText().trim(), formatter);
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            LocalDate start = LocalDate.parse(txtStartDate.getText().trim(), fmt);
+            LocalDate end = LocalDate.parse(txtEndDate.getText().trim(), fmt);
 
+            receipts = receiptDAO.findByDateRange(start, end);
 
-            items = billDAO.findByDateRange(start, end);
-        } catch (DateTimeParseException ex) {
-             XDialog.alert(this, "❌ Ngày không hợp lệ hoặc sai định dạng (dd/MM/yyyy).\\n" + ex.getMessage());
-            return;
-        }
-
-        for (Bill item : items) {
-            String tableName = "Table #" + item.getTableId();
-            Employee emp = employeeDAO.findById(item.getEmployeeId());
-            String empText = emp != null ? emp.getFullName() : "";
-
-
-            Object[] row = {
-                item.getId(),
-                tableName,
-                item.getCheckIn(),
-                item.getCheckOut(),
-                statusName(item.getStatus()),
-                empText,
-                false
-            };
-            model.addRow(row);
-        }
-    }
-
-private String statusName(int status) {
-    return switch (status) {
-        case 0 -> "Service";
-        case 1 -> "Canceled";
-        case 2 -> "Completed";
-        default -> "Unknown";
-    };
-}
-
-    @Override
-    public void edit() {
-        Bill entity = items.get(tblBills.getSelectedRow());
-        this.setForm(entity);
-        this.setEditable(true);
-        tabs.setSelectedIndex(1);
-    }
-
-    @Override
-    public void checkAll() {
-        this.setCheckedAll(true);
-    }
-
-    @Override
-    public void uncheckAll() {
-        this.setCheckedAll(false);
-    }
-
-    private void setCheckedAll(boolean checked) {
-        for (int i = 0; i < tblBills.getRowCount(); i++) {
-            tblBills.setValueAt(checked, i, 2);
-        }
-    }
-
-@Override
-public void deleteCheckedItems() {
-    try {
-        if (XDialog.confirm("Bạn thực sự muốn xóa các mục đã chọn?")) {
-            for (int i = 0; i < tblBills.getRowCount(); i++) {
-                if ((Boolean) tblBills.getValueAt(i, 6)) {
-                    dao.deleteById(items.get(i).getId());
-                }
-            }
-            this.fillToTable();
-        }
-    } catch (Exception e) {
-        XDialog.alert(this,"❌ Lỗi khi xóa các mục đã chọn: " + e.getMessage());
-    }
-}
-
-  @Override
-    public void fillBillDetails() {
-        String idText = txtIdBill.getText();
-        if (idText == null || idText.trim().isEmpty()) {
-            details = List.of();
-            ((DefaultTableModel) tblBillDetail.getModel()).setRowCount(0);
-            return;
-        }
-
-        try {
-            Long billId = Long.parseLong(idText);
-            details = billDetailDAO.findByBillId(billId);
-
-            DefaultTableModel model = (DefaultTableModel) tblBillDetail.getModel();
-            model.setRowCount(0);
-            for (BillDetail d : details) {
-                Dish dish = dishDAO.findById(d.getDishId());
+            for (ImportReceipt r : receipts) {
+                Supplier s = supplierDAO.findById(r.getSupplierId());
+                Employee e = employeeDAO.findById(r.getEmployeeId());
                 Object[] row = {
-                    dish != null ? dish.getName() : "",
-                    d.getUnitPrice(),
-                    "", // discount chưa có
-                    d.getQuantity(),
-                    d.getUnitPrice().multiply(new java.math.BigDecimal(d.getQuantity()))
+                    r.getId(),
+                    r.getImportDate(),
+                    r.getSupplierId(),
+                    s != null ? s.getName() : "",
+                    r.getEmployeeId(),
+                    e != null ? e.getFullName() : "",
+                    false
                 };
                 model.addRow(row);
             }
-        } catch (NumberFormatException ex) {
-            XDialog.alert("❌ Mã phiếu không hợp lệ.");
-            ((DefaultTableModel) tblBillDetail.getModel()).setRowCount(0);
+        } catch (DateTimeParseException e) {
+            XDialog.alert(this, "❌ Ngày không hợp lệ: " + e.getMessage());
         }
     }
 
-    
     @Override
-    public void setForm(Bill entity) {
-        txtIdBill.setText(entity.getId() != null ? String.valueOf(entity.getId()) : "");
-        txtTableNumber.setText(entity.getTableId() != null ? "Table #" + entity.getTableId() : "");
-        txtCreateTime.setText(entity.getCheckIn() != null ? entity.getCheckIn().toString() : "");
-        txtPayTime.setText(entity.getCheckOut() != null ? entity.getCheckOut().toString() : "");
+    public void fillImportDetails() {
+        String idText = txtImportId.getText();
+        if (idText == null || idText.isEmpty()) return;
+
+        try {
+            long id = Long.parseLong(idText);
+            details = detailDAO.findByImportReceiptId(id);
+            DefaultTableModel model = (DefaultTableModel) tblImportDetail.getModel();
+            model.setRowCount(0);
+            
+
+            for (ImportDetail d : details) {
+            Ingredient ing = ingredientDAO.findById(d.getIngredientId());
+            String ingName = ing != null ? ing.getName() : "";
+                Object[] row = {
+                    ingName,
+                    d.getUnitPrice(),
+                    d.getQuantity(),
+                    d.getUnit(),
+                    d.getUnitPrice().multiply(BigDecimal.valueOf(d.getQuantity()))
+                };
+                model.addRow(row);
+            }
+        } catch (Exception e) {
+            XDialog.alert(this, "❌ Lỗi khi hiển thị chi tiết phiếu: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void setForm(ImportReceipt entity) {
+        txtImportId.setText(entity.getId() != null ? String.valueOf(entity.getId()) : "");
+        txtImportDate.setText(entity.getImportDate() != null ? entity.getImportDate().toString() : "");
+        txtSupplierId.setText(entity.getSupplierId() != null ? String.valueOf(entity.getSupplierId()) : "");
+        Supplier s = supplierDAO.findById(entity.getSupplierId());
+        txtSupplierName.setText(s != null ? s.getName() : "");
         txtEmployeeId.setText(entity.getEmployeeId() != null ? String.valueOf(entity.getEmployeeId()) : "");
 
-        Integer status = entity.getStatus();
-rdoService.setSelected(status != null && status == 0);
-rdoCanceled.setSelected(status != null && status == 1);
-rdoCompleted.setSelected(status != null && status == 2);
-
-
-        fillBillDetails();
+        fillImportDetails();
     }
-@Override
-public void delete() {
-    try {
-        if (XDialog.confirm("Bạn thực sự muốn xóa?")) {
-            dao.deleteById(Long.parseLong(txtIdBill.getText()));
-            this.fillToTable();
-            this.clear();
-        }
-    } catch (Exception e) {
-        XDialog.alert(this,"❌ Lỗi khi xóa phiếu: " + e.getMessage());
+
+    @Override
+    public ImportReceipt getForm() {
+        if (!XStr.requireField(txtSupplierId.getText(), "Mã NCC")) return null;
+        if (!XStr.requireField(txtEmployeeId.getText(), "Mã nhân viên")) return null;
+
+        ImportReceipt i = new ImportReceipt();
+        if (!txtImportId.getText().isEmpty()) i.setId(Long.parseLong(txtImportId.getText()));
+        i.setSupplierId(Integer.parseInt(txtSupplierId.getText()));
+        i.setEmployeeId(Integer.parseInt(txtEmployeeId.getText()));
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd"); // hoặc "dd/MM/yyyy" nếu bạn nhập theo định dạng đó
+        LocalDate localDate = LocalDate.parse(txtImportDate.getText(), fmt);
+        i.setImportDate(java.sql.Date.valueOf(localDate));
+        return i;
     }
+
+    @Override
+    public void clear() {
+        setForm(new ImportReceipt());
+        setEditable(false);
+    }
+
+    @Override
+    public void setEditable(boolean editable) {
+        txtImportId.setEnabled(!editable);
+        btnCreate.setEnabled(!editable);
+        btnUpdate.setEnabled(editable);
+        btnDelete.setEnabled(editable);
+    }
+
+    @Override
+public void edit() {
+    int index = tblImport.getSelectedRow();
+    if (receipts == null || receipts.size() <= index || index < 0) return;
+
+    ImportReceipt r = receipts.get(index);
+    setForm(r);
+    setEditable(true);
+    tabs.setSelectedIndex(1);
 }
 
 
     @Override
     public void create() {
-        Bill entity = getForm();
-        billDAO.create(entity);
+        ImportReceipt r = getForm();
+        receiptDAO.create(r);
         fillToTable();
         clear();
     }
 
     @Override
-    public Bill getForm() {
-        if (!XStr.requireField(txtIdBill.getText(), "Mã phiếu")) return null;
-        if (!XStr.requireField(txtTableNumber.getText(), "Số bàn")) return null;
-        if (!XStr.requireField(txtEmployeeId.getText(), "Nhân viên")) return null;
+    public void update() {
+        ImportReceipt r = getForm();
+        receiptDAO.update(r);
+        fillToTable();
+        XDialog.alert(this, "✅ Cập nhật thành công");
+    }
 
-        Bill entity = new Bill();
-        entity.setId(Long.parseLong(txtIdBill.getText()));
-
-        String tableText = txtTableNumber.getText();
-        if (!tableText.matches("Table #\\d+")) {
-            XDialog.alert(this, "Số bàn không hợp lệ. Định dạng phải là: Table #<số>");
-            return null;
+    @Override
+    public void delete() {
+        if (XDialog.confirm("Bạn thực sự muốn xóa?")) {
+            receiptDAO.deleteById(Long.parseLong(txtImportId.getText()));
+            fillToTable();
+            clear();
         }
-        int tableId = Integer.parseInt(tableText.replace("Table #", ""));
-        entity.setTableId(tableId);
+    }
 
-        entity.setEmployeeId(Integer.parseInt(txtEmployeeId.getText()));
+    @Override
+    public void checkAll() {
+        for (int i = 0; i < tblImport.getRowCount(); i++) {
+            tblImport.setValueAt(true, i, 6);
+        }
+    }
 
-        if (rdoService.isSelected()) entity.setStatus(0);
-        else if (rdoCanceled.isSelected()) entity.setStatus(1);
-        else if (rdoCompleted.isSelected()) entity.setStatus(2);
-
-        return entity;
+    @Override
+    public void uncheckAll() {
+        for (int i = 0; i < tblImport.getRowCount(); i++) {
+            tblImport.setValueAt(false, i, 6);
+        }
     }
 
 @Override
-public void update() {
-    try {
-        Bill entity = this.getForm();
-        dao.update(entity);
-        this.fillToTable();
-        XDialog.alert(this, "✅ Cập nhật phiếu thành công!");
-    } catch (Exception e) {
-        XDialog.alert(this,"❌ Lỗi khi cập nhật phiếu: " + e.getMessage());
+public void deleteCheckedItems() {
+    if (!XDialog.confirm("Bạn muốn xóa tất cả phiếu đã chọn?")) return;
+    
+    for (int i = 0; i < tblImport.getRowCount(); i++) {
+        Boolean checked = (Boolean) tblImport.getValueAt(i, 6);
+        if (checked != null && checked && receipts != null && receipts.size() > i) {
+            receiptDAO.deleteById(receipts.get(i).getId());
+        }
     }
+
+    fillToTable();
 }
 
 
-
-
-    @Override
-    public void clear() {
-        this.setForm(new Bill());
-        this.setEditable(false);
-    }
-
-    @Override
-    public void setEditable(boolean editable) {
-        txtIdBill.setEnabled(!editable);
-        btnCreate.setEnabled(!editable);
-        btnUpdate.setEnabled(editable);
-        btnDelete.setEnabled(editable);
-
-        int rowCount = tblBills.getRowCount();
-        btnMoveFirst.setEnabled(editable && rowCount > 0);
-        btnMovePrevious.setEnabled(editable && rowCount > 0);
-        btnMoveNext.setEnabled(editable && rowCount > 0);
-        btnMoveLast.setEnabled(editable && rowCount > 0);
-    }
-
     @Override
     public void moveFirst() {
-        this.moveTo(0);
+        moveTo(0);
     }
 
     @Override
     public void movePrevious() {
-        this.moveTo(tblBills.getSelectedRow() - 1);
+        moveTo(tblImport.getSelectedRow() - 1);
     }
 
     @Override
     public void moveNext() {
-        this.moveTo(tblBills.getSelectedRow() + 1);
+        moveTo(tblImport.getSelectedRow() + 1);
     }
 
     @Override
     public void moveLast() {
-        this.moveTo(tblBills.getRowCount() - 1);
+        moveTo(tblImport.getRowCount() - 1);
     }
 
     @Override
     public void moveTo(int index) {
-        if (index < 0) {
-            this.moveLast();
-        } else if (index >= tblBills.getRowCount()) {
-            this.moveFirst();
-        } else {
-            tblBills.clearSelection();
-            tblBills.setRowSelectionInterval(index, index);
-            this.edit();
-        }
-    } 
+        if (index < 0) index = tblImport.getRowCount() - 1;
+        if (index >= tblImport.getRowCount()) index = 0;
+        tblImport.setRowSelectionInterval(index, index);
+        edit();
+    }
+
     /**
      * @param args the command line arguments
      */
@@ -838,20 +762,21 @@ public void update() {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(BillManagerJDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(ImportManagerJDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(BillManagerJDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(ImportManagerJDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(BillManagerJDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(ImportManagerJDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(BillManagerJDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(ImportManagerJDialog.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
         //</editor-fold>
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new BillManagerJDialog().setVisible(true);
+                new ImportManagerJDialog().setVisible(true);
             }
         });
     }
@@ -873,7 +798,6 @@ public void update() {
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JComboBox<String> cboTimeRanges;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -884,19 +808,16 @@ public void update() {
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JRadioButton rdoCanceled;
-    private javax.swing.JRadioButton rdoCompleted;
-    private javax.swing.JRadioButton rdoService;
     private javax.swing.JTabbedPane tabs;
-    private javax.swing.JTable tblBillDetail;
-    private javax.swing.JTable tblBills;
-    private javax.swing.JTextField txtCreateTime;
+    private javax.swing.JTable tblImport;
+    private javax.swing.JTable tblImportDetail;
     private javax.swing.JTextField txtEmployeeId;
     private javax.swing.JTextField txtEndDate;
-    private javax.swing.JTextField txtIdBill;
-    private javax.swing.JTextField txtPayTime;
+    private javax.swing.JTextField txtImportDate;
+    private javax.swing.JTextField txtImportId;
     private javax.swing.JTextField txtStartDate;
-    private javax.swing.JTextField txtTableNumber;
+    private javax.swing.JTextField txtSupplierId;
+    private javax.swing.JTextField txtSupplierName;
     // End of variables declaration//GEN-END:variables
 
 

@@ -123,22 +123,22 @@
 
               <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
               <SubComponents>
-                <Component class="javax.swing.JTable" name="tblBills">
+                <Component class="javax.swing.JTable" name="tblImport">
                   <Properties>
                     <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
                       <Table columnCount="7" rowCount="4">
                         <Column editable="true" title="M&#xe3; Phi&#x1ebf;u" type="java.lang.Object"/>
-                        <Column editable="true" title="Th&#x1ebb; S&#x1ed1;" type="java.lang.Object"/>
-                        <Column editable="true" title="Th&#x1edd;i &#x111;i&#x1ec3;m t&#x1ea1;o" type="java.lang.Object"/>
-                        <Column editable="true" title="Th&#x1edd;i &#x111;i&#x1ec3;m thanh to&#xe1;n" type="java.lang.Object"/>
-                        <Column editable="true" title="Tr&#x1ea1;ng th&#xe1;i" type="java.lang.Object"/>
-                        <Column editable="true" title="Gmail" type="java.lang.Object"/>
+                        <Column editable="true" title="Ng&#xe0;y Nh&#x1ead;p" type="java.lang.Object"/>
+                        <Column editable="true" title="M&#xe3; Nh&#xe0; Cung C&#x1ea5;p" type="java.lang.Object"/>
+                        <Column editable="true" title="Nh&#xe0; Cung C&#x1ea5;p" type="java.lang.Object"/>
+                        <Column editable="true" title="M&#xe3; Nh&#xe2;n Vi&#xea;n" type="java.lang.Object"/>
+                        <Column editable="true" title="T&#xea;n Nh&#xe2;n Vi&#xea;n" type="java.lang.Object"/>
                         <Column editable="true" title="" type="java.lang.Boolean"/>
                       </Table>
                     </Property>
                   </Properties>
                   <Events>
-                    <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="tblBillsMouseClicked"/>
+                    <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="tblImportMouseClicked"/>
                   </Events>
                 </Component>
               </SubComponents>
@@ -245,11 +245,11 @@
                                   </Group>
                                   <Group type="102" alignment="0" attributes="0">
                                       <EmptySpace max="-2" attributes="0"/>
-                                      <Component id="txtIdBill" min="-2" pref="258" max="-2" attributes="0"/>
+                                      <Component id="txtImportId" min="-2" pref="258" max="-2" attributes="0"/>
                                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                       <Group type="103" groupAlignment="0" attributes="0">
                                           <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
-                                          <Component id="txtTableNumber" min="-2" pref="258" max="-2" attributes="0"/>
+                                          <Component id="txtEmployeeId" min="-2" pref="258" max="-2" attributes="0"/>
                                       </Group>
                                   </Group>
                               </Group>
@@ -259,35 +259,35 @@
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Group type="102" alignment="1" attributes="0">
-                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
                                       <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="txtCreateTime" alignment="0" min="-2" pref="258" max="-2" attributes="0"/>
-                                          <Component id="jLabel4" alignment="0" min="-2" max="-2" attributes="0"/>
+                                          <Group type="102" attributes="0">
+                                              <EmptySpace min="0" pref="6" max="32767" attributes="0"/>
+                                              <Component id="jLabel4" min="-2" max="-2" attributes="0"/>
+                                              <EmptySpace min="-2" pref="204" max="-2" attributes="0"/>
+                                          </Group>
+                                          <Group type="102" alignment="0" attributes="0">
+                                              <Component id="txtImportDate" min="-2" pref="252" max="-2" attributes="0"/>
+                                              <EmptySpace max="32767" attributes="0"/>
+                                          </Group>
                                       </Group>
-                                      <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                       <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="txtPayTime" min="-2" pref="258" max="-2" attributes="0"/>
-                                          <Group type="102" alignment="1" attributes="0">
+                                          <Group type="102" attributes="0">
                                               <Component id="jLabel5" min="-2" max="-2" attributes="0"/>
                                               <EmptySpace min="-2" pref="212" max="-2" attributes="0"/>
                                           </Group>
+                                          <Group type="102" alignment="1" attributes="0">
+                                              <Component id="txtSupplierId" min="-2" pref="274" max="-2" attributes="0"/>
+                                              <EmptySpace min="-2" pref="51" max="-2" attributes="0"/>
+                                          </Group>
                                       </Group>
                                   </Group>
-                                  <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
+                                  <Group type="102" alignment="0" attributes="0">
+                                      <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
+                                      <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                  </Group>
                                   <Group type="102" alignment="0" attributes="0">
                                       <Group type="103" groupAlignment="0" attributes="0">
-                                          <Group type="102" alignment="0" attributes="0">
-                                              <Component id="rdoService" min="-2" max="-2" attributes="0"/>
-                                              <EmptySpace max="-2" attributes="0"/>
-                                              <Component id="rdoCompleted" min="-2" max="-2" attributes="0"/>
-                                              <EmptySpace max="-2" attributes="0"/>
-                                              <Component id="rdoCanceled" min="-2" max="-2" attributes="0"/>
-                                          </Group>
-                                          <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
-                                      </Group>
-                                      <EmptySpace max="32767" attributes="0"/>
-                                      <Group type="103" groupAlignment="0" attributes="0">
-                                          <Component id="txtEmployeeId" min="-2" pref="258" max="-2" attributes="0"/>
+                                          <Component id="txtSupplierName" min="-2" pref="258" max="-2" attributes="0"/>
                                           <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
                                       </Group>
                                       <EmptySpace min="-2" pref="67" max="-2" attributes="0"/>
@@ -309,8 +309,8 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="txtIdBill" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="txtTableNumber" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="txtImportId" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="txtEmployeeId" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="-2" pref="14" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
@@ -319,26 +319,15 @@
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="txtPayTime" alignment="3" min="-2" max="-2" attributes="0"/>
-                          <Component id="txtCreateTime" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="txtSupplierId" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="txtImportDate" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
-                          <Component id="jLabel6" alignment="1" min="-2" max="-2" attributes="0"/>
-                      </Group>
-                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="jLabel6" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="7" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="1" attributes="0">
-                          <Group type="102" attributes="0">
-                              <Group type="103" groupAlignment="3" attributes="0">
-                                  <Component id="rdoCompleted" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="rdoService" alignment="3" min="-2" max="-2" attributes="0"/>
-                                  <Component id="rdoCanceled" alignment="3" min="-2" max="-2" attributes="0"/>
-                              </Group>
-                              <EmptySpace max="-2" attributes="0"/>
-                              <Component id="Jlabel2" min="-2" max="-2" attributes="0"/>
-                          </Group>
-                          <Component id="txtEmployeeId" min="-2" max="-2" attributes="0"/>
+                          <Component id="Jlabel2" min="-2" max="-2" attributes="0"/>
+                          <Component id="txtSupplierName" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="jScrollPane2" min="-2" pref="104" max="-2" attributes="0"/>
@@ -359,7 +348,10 @@
             </DimensionLayout>
           </Layout>
           <SubComponents>
-            <Component class="javax.swing.JTextField" name="txtIdBill">
+            <Component class="javax.swing.JTextField" name="txtImportId">
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="txtImportIdActionPerformed"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JLabel" name="Jlabel2">
             </Component>
@@ -432,50 +424,28 @@
                 <Property name="text" type="java.lang.String" value="M&#xe3; Phi&#x1ebf;u"/>
               </Properties>
             </Component>
-            <Component class="javax.swing.JLabel" name="jLabel2">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Tr&#x1ea1;ng Th&#xe1;i"/>
-              </Properties>
-            </Component>
-            <Component class="javax.swing.JRadioButton" name="rdoService">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Service"/>
-              </Properties>
-              <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="rdoServiceActionPerformed"/>
-              </Events>
-            </Component>
-            <Component class="javax.swing.JRadioButton" name="rdoCompleted">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Completed"/>
-              </Properties>
-            </Component>
-            <Component class="javax.swing.JRadioButton" name="rdoCanceled">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Canceled"/>
-              </Properties>
-            </Component>
-            <Component class="javax.swing.JTextField" name="txtTableNumber">
-            </Component>
-            <Component class="javax.swing.JTextField" name="txtCreateTime">
-            </Component>
-            <Component class="javax.swing.JTextField" name="txtPayTime">
-            </Component>
             <Component class="javax.swing.JTextField" name="txtEmployeeId">
+            </Component>
+            <Component class="javax.swing.JTextField" name="txtImportDate">
+            </Component>
+            <Component class="javax.swing.JTextField" name="txtSupplierId">
+            </Component>
+            <Component class="javax.swing.JTextField" name="txtSupplierName">
             </Component>
             <Container class="javax.swing.JScrollPane" name="jScrollPane2">
 
               <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
               <SubComponents>
-                <Component class="javax.swing.JTable" name="tblBillDetail">
+                <Component class="javax.swing.JTable" name="tblImportDetail">
                   <Properties>
                     <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
-                      <Table columnCount="5" rowCount="4">
-                        <Column editable="true" title="&#x110;&#x1ed3; &#x103;n" type="java.lang.Object"/>
+                      <Table columnCount="6" rowCount="4">
+                        <Column editable="true" title="Nguy&#xea;n Li&#x1ec7;u" type="java.lang.Object"/>
                         <Column editable="true" title="&#x110;&#x1a1;n gi&#xe1;" type="java.lang.Object"/>
-                        <Column editable="true" title="Gi&#x1ea3;m gi&#xe1;" type="java.lang.Object"/>
                         <Column editable="true" title="S&#x1ed1; l&#x1b0;&#x1ee3;ng" type="java.lang.Object"/>
+                        <Column editable="true" title="&#x110;&#x1a1;n v&#x1ecb;" type="java.lang.Object"/>
                         <Column editable="true" title="Th&#xe0;nh ti&#x1ec1;n" type="java.lang.Object"/>
+                        <Column editable="true" title="" type="java.lang.Boolean"/>
                       </Table>
                     </Property>
                   </Properties>
@@ -484,22 +454,22 @@
             </Container>
             <Component class="javax.swing.JLabel" name="jLabel3">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Th&#x1ebb; s&#x1ed1;"/>
+                <Property name="text" type="java.lang.String" value="M&#xe3; Nh&#xe2;n Vi&#xea;n"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel4">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Th&#x1edd;i &#x111;i&#x1ec3;m t&#x1ea1;o"/>
+                <Property name="text" type="java.lang.String" value="Ng&#xe0;y Nh&#x1ead;p"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel5">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Th&#x1edd;i &#x111;i&#x1ec3;m thanh to&#xe1;n"/>
+                <Property name="text" type="java.lang.String" value="M&#xe3; Nh&#xe0; Cung C&#x1ea5;p"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="jLabel6">
               <Properties>
-                <Property name="text" type="java.lang.String" value="Email"/>
+                <Property name="text" type="java.lang.String" value="T&#xea;n Nh&#xe0; Cung C&#x1ea5;p"/>
               </Properties>
             </Component>
           </SubComponents>
