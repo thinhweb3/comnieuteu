@@ -193,7 +193,7 @@
     </Container>
     <Component class="javax.swing.JButton" name="btnAdd">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Th&#xea;m &#x111;&#x1ed3; u&#x1ed1;ng"/>
+        <Property name="text" type="java.lang.String" value="Th&#xea;m &#x111;&#x1ed3; &#x103;n"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnAddActionPerformed"/>
@@ -201,7 +201,7 @@
     </Component>
     <Component class="javax.swing.JButton" name="btnRemove">
       <Properties>
-        <Property name="text" type="java.lang.String" value="X&#xf3;a &#x111;&#x1ed3; u&#x1ed1;ng"/>
+        <Property name="text" type="java.lang.String" value="X&#xf3;a &#x111;&#x1ed3; &#x103;n"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnRemoveActionPerformed"/>

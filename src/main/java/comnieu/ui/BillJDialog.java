@@ -52,6 +52,8 @@ public void setBill(Bill bill) {
 public BillJDialog(Dialog owner, boolean modal) {
     super(owner, modal);
     initComponents();
+
+
 }
 
     /**
@@ -131,14 +133,14 @@ public BillJDialog(Dialog owner, boolean modal) {
         });
         jScrollPane1.setViewportView(tblBillDetails);
 
-        btnAdd.setText("Thêm đồ uống");
+        btnAdd.setText("Thêm đồ ăn");
         btnAdd.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnAddActionPerformed(evt);
             }
         });
 
-        btnRemove.setText("Xóa đồ uống");
+        btnRemove.setText("Xóa đồ ăn");
         btnRemove.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnRemoveActionPerformed(evt);
@@ -310,7 +312,7 @@ public BillJDialog(Dialog owner, boolean modal) {
 public void removeDrinks() {
     try {
         for (int i = 0; i < tblBillDetails.getRowCount(); i++) {
-            Boolean checked = (Boolean) tblBillDetails.getValueAt(i, 0);
+            Boolean checked = (Boolean) tblBillDetails.getValueAt(i, 5);
             if (checked != null && checked) {
                 billDetailDao.deleteById(details.get(i).getId());
             }
@@ -448,10 +450,12 @@ boolean editable = (bill.getStatus() == 0) && (table != null && table.getStatus(
                     d.getUnitPrice(),
                     "", // discount chưa có
                     d.getQuantity(),
-                    d.getUnitPrice().multiply(new java.math.BigDecimal(d.getQuantity()))
+                    d.getUnitPrice().multiply(new java.math.BigDecimal(d.getQuantity())),
+                    Boolean.FALSE // <-- cột checkbox
                 };
                 model.addRow(row);
             }
+
         } catch (NumberFormatException ex) {
             XDialog.alert("Mã phiếu không hợp lệ: " + idText);
             ((DefaultTableModel) tblBillDetails.getModel()).setRowCount(0);
