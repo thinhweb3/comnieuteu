@@ -97,6 +97,7 @@ public class PromotionStatsManagerJDialog extends javax.swing.JFrame {
         cboTimeRanges = new javax.swing.JComboBox<>();
         jScrollPane1 = new javax.swing.JScrollPane();
         tblPromotionUsage = new javax.swing.JTable();
+        btnExcel = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -139,25 +140,38 @@ public class PromotionStatsManagerJDialog extends javax.swing.JFrame {
         });
         jScrollPane1.setViewportView(tblPromotionUsage);
 
+        btnExcel.setBackground(new java.awt.Color(0, 255, 0));
+        btnExcel.setText("Xuất file Excel");
+        btnExcel.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnExcelActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addGap(90, 90, 90)
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(txtBegin, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(txtEnd, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnFilter, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(cboTimeRanges, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(90, Short.MAX_VALUE))
             .addComponent(jScrollPane1)
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(90, 90, 90)
+                        .addComponent(jLabel1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtBegin, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtEnd, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnFilter, javax.swing.GroupLayout.PREFERRED_SIZE, 63, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cboTimeRanges, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(15, 15, 15)
+                        .addComponent(btnExcel)))
+                .addContainerGap(90, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -171,7 +185,10 @@ public class PromotionStatsManagerJDialog extends javax.swing.JFrame {
                     .addComponent(btnFilter)
                     .addComponent(cboTimeRanges, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 230, Short.MAX_VALUE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 204, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(btnExcel)
+                .addContainerGap(19, Short.MAX_VALUE))
         );
 
         pack();
@@ -185,6 +202,10 @@ public class PromotionStatsManagerJDialog extends javax.swing.JFrame {
         selectTimeRange();
         fillTable();
     }//GEN-LAST:event_cboTimeRangesActionPerformed
+
+    private void btnExcelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnExcelActionPerformed
+        exportPromotionsToExcel();
+    }//GEN-LAST:event_btnExcelActionPerformed
 
     /**
      * @param args the command line arguments
@@ -223,6 +244,7 @@ public class PromotionStatsManagerJDialog extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnExcel;
     private javax.swing.JButton btnFilter;
     private javax.swing.JComboBox<String> cboTimeRanges;
     private javax.swing.JLabel jLabel1;
@@ -232,4 +254,140 @@ public class PromotionStatsManagerJDialog extends javax.swing.JFrame {
     private javax.swing.JTextField txtBegin;
     private javax.swing.JTextField txtEnd;
     // End of variables declaration//GEN-END:variables
+    // ==== Lấy chuỗi khoảng thời gian lọc (hiện trên file) ====
+    private String rangeLabel() {
+        return "Từ ngày " + txtBegin.getText() + " đến ngày " + txtEnd.getText();
+    }
+
+    // ==== Hộp thoại chọn file lưu ====
+    private java.io.File chooseFile(String title, String defaultName, String... extensions) {
+        javax.swing.JFileChooser fc = new javax.swing.JFileChooser();
+        fc.setDialogTitle(title);
+        fc.setSelectedFile(new java.io.File(defaultName));
+        int opt = fc.showSaveDialog(this);
+        if (opt == javax.swing.JFileChooser.APPROVE_OPTION) {
+            java.io.File f = fc.getSelectedFile();
+            if (extensions != null && extensions.length > 0) {
+                String name = f.getName().toLowerCase();
+                boolean hasExt = false;
+                for (String ext : extensions) if (name.endsWith(ext.toLowerCase())) { hasExt = true; break; }
+                if (!hasExt) f = new java.io.File(f.getParentFile(), f.getName() + extensions[0]);
+            }
+            return f;
+        }
+        return null;
+    }
+
+    // ====================== Excel: Thống kê chương trình khuyến mãi ======================
+    private void exportPromotionsToExcel() {
+        // Làm tươi dữ liệu theo filter hiện tại (nếu người dùng vừa đổi khoảng ngày)
+        fillTable();
+
+        java.io.File file = chooseFile("Lưu Excel - Thống kê khuyến mãi",
+                                       "ThongKeKhuyenMai.xlsx", ".xlsx");
+        if (file == null) return;
+
+        try (org.apache.poi.xssf.usermodel.XSSFWorkbook wb = new org.apache.poi.xssf.usermodel.XSSFWorkbook()) {
+            org.apache.poi.ss.usermodel.Sheet sh = wb.createSheet("KM đã dùng");
+            int rowIdx = 0;
+
+            // Styles
+            org.apache.poi.ss.usermodel.CellStyle header = wb.createCellStyle();
+            org.apache.poi.ss.usermodel.Font bold = wb.createFont(); bold.setBold(true); header.setFont(bold);
+
+            org.apache.poi.ss.usermodel.DataFormat df = wb.createDataFormat();
+            org.apache.poi.ss.usermodel.CellStyle percent = wb.createCellStyle();
+            percent.setDataFormat(df.getFormat("0%")); // hiển thị 10% thay vì 0.1
+
+            org.apache.poi.ss.usermodel.CellStyle intStyle = wb.createCellStyle();
+            intStyle.setDataFormat(df.getFormat("0"));
+
+            // Title + range
+            sh.createRow(rowIdx++).createCell(0).setCellValue("THỐNG KÊ CHƯƠNG TRÌNH KHUYẾN MÃI ĐÃ SỬ DỤNG");
+            sh.getRow(0).getCell(0).setCellStyle(header);
+            sh.createRow(rowIdx++).createCell(0).setCellValue(rangeLabel());
+            rowIdx++;
+
+            // Header
+            org.apache.poi.ss.usermodel.Row h = sh.createRow(rowIdx++);
+            h.createCell(0).setCellValue("Mã Khuyến Mãi");
+            h.createCell(1).setCellValue("Tên Chương Trình");
+            h.createCell(2).setCellValue("Phần Trăm Giảm Giá");
+            h.createCell(3).setCellValue("Số Lần Dùng");
+            for (int c = 0; c <= 3; c++) h.getCell(c).setCellStyle(header);
+
+            // Data từ JTable
+            javax.swing.table.TableModel m = tblPromotionUsage.getModel();
+            int totalUsed = 0;
+
+            for (int i = 0; i < m.getRowCount(); i++) {
+                Object idObj   = m.getValueAt(i, 0);
+                Object nameObj = m.getValueAt(i, 1);
+                Object rateObj = m.getValueAt(i, 2); // "10%" dạng chuỗi
+                Object usedObj = m.getValueAt(i, 3);
+
+                if (idObj == null || nameObj == null || rateObj == null || usedObj == null) continue;
+
+                org.apache.poi.ss.usermodel.Row r = sh.createRow(rowIdx++);
+                // Mã KM
+                try {
+                    int id = Integer.parseInt(String.valueOf(idObj).replaceAll("\\D+", ""));
+                    org.apache.poi.ss.usermodel.Cell c0 = r.createCell(0);
+                    c0.setCellValue(id);
+                    c0.setCellStyle(intStyle);
+                } catch (Exception ex) {
+                    r.createCell(0).setCellValue(String.valueOf(idObj)); // fallback string
+                }
+
+                // Tên CT
+                r.createCell(1).setCellValue(String.valueOf(nameObj));
+
+                // % giảm (chuỗi "10%" -> số 0.10 với định dạng 0%)
+                String rateStr = String.valueOf(rateObj);
+                String digits = rateStr.replaceAll("\\D+", ""); // "10"
+                double rate = 0d;
+                if (!digits.isEmpty()) {
+                    rate = Integer.parseInt(digits) / 100.0; // 10 -> 0.10
+                }
+                org.apache.poi.ss.usermodel.Cell c2 = r.createCell(2);
+                c2.setCellValue(rate);
+                c2.setCellStyle(percent);
+
+                // Số lần dùng
+                int used = 0;
+                try { used = Integer.parseInt(String.valueOf(usedObj).replaceAll("\\D+", "")); } catch (Exception ignore) {}
+                totalUsed += used;
+
+                org.apache.poi.ss.usermodel.Cell c3 = r.createCell(3);
+                c3.setCellValue(used);
+                c3.setCellStyle(intStyle);
+            }
+
+            // Dòng Tổng số lần dùng
+            org.apache.poi.ss.usermodel.Row rSum = sh.createRow(rowIdx++);
+            org.apache.poi.ss.usermodel.Cell cLabel = rSum.createCell(0);
+            cLabel.setCellValue("TỔNG SỐ LẦN DÙNG");
+            cLabel.setCellStyle(header);
+            // gộp nhãn qua cột 1-2 (tuỳ thích). Ở đây ghi đơn giản để gọn code:
+            rSum.createCell(1); rSum.createCell(2);
+            org.apache.poi.ss.usermodel.Cell cTotal = rSum.createCell(3);
+            cTotal.setCellValue(totalUsed);
+            cTotal.setCellStyle(intStyle);
+
+            // Auto-size
+            for (int c = 0; c <= 3; c++) sh.autoSizeColumn(c);
+
+            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(file)) {
+                wb.write(fos);
+            }
+
+            javax.swing.JOptionPane.showMessageDialog(this,
+                "Xuất Excel thành công:\n" + file.getAbsolutePath());
+        } catch (Exception e) {
+            e.printStackTrace();
+            javax.swing.JOptionPane.showMessageDialog(this,
+                "Xuất Excel thất bại: " + e.getMessage(),
+                "Lỗi", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }
 }
