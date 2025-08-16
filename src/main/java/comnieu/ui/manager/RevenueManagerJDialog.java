@@ -16,6 +16,13 @@ import comnieu.dao.impl.PromotionStatsDAOImpl;
 import comnieu.entity.PromotionStats;
 
 public class RevenueManagerJDialog extends javax.swing.JFrame implements RevenueController {
+    
+    // formatter VND cho UI: 85.000đ
+    private static final java.text.DecimalFormat vndFmt =
+        new java.text.DecimalFormat(
+            "#,###'đ'",
+            new java.text.DecimalFormatSymbols(new java.util.Locale("vi","VN"))
+        );
 
     public RevenueManagerJDialog() {
         initComponents();
@@ -80,16 +87,19 @@ public class RevenueManagerJDialog extends javax.swing.JFrame implements Revenue
         BigDecimal total = BigDecimal.ZERO;
 
         for (Revenue r : list) {
-            model.addRow(new Object[]{r.getEmployeeName(), r.getTotalRevenue()});
+            model.addRow(new Object[]{
+                r.getEmployeeName(),
+                vndFmt.format(r.getTotalRevenue())   // ví dụ: 85.000đ
+            });
             total = total.add(r.getTotalRevenue());
         }
 
-        txtTotalRevenue.setText(total.toString());
+        txtTotalRevenue.setText(vndFmt.format(total));
     }
 
     @Override
     public void fillPopularDishes(Date from, Date to) {
-        DefaultTableModel modelMost = (DefaultTableModel) tblMostPopularDishes.getModel();
+        DefaultTableModel modelMost  = (DefaultTableModel) tblMostPopularDishes.getModel();
         DefaultTableModel modelLeast = (DefaultTableModel) tblLeastPopularDishes.getModel();
         modelMost.setRowCount(0);
         modelLeast.setRowCount(0);
@@ -101,7 +111,7 @@ public class RevenueManagerJDialog extends javax.swing.JFrame implements Revenue
             Object[] row = new Object[]{
                 d.getName(),
                 d.getQuantity() + " lần",
-                d.getTotal() + "đ"
+                vndFmt.format(d.getTotal())  // <-- 85.000đ thay vì 85000đ
             };
             if (i < 3) {
                 modelMost.addRow(row);
@@ -501,8 +511,7 @@ public class RevenueManagerJDialog extends javax.swing.JFrame implements Revenue
     private final RevenueDAO dao = new RevenueDAOImpl();
     private final PromotionStatsDAO promoDao = new PromotionStatsDAOImpl();
     // ==== Biến format tiền (tuỳ chọn nếu muốn format VND trong Excel) ====
-    private java.text.NumberFormat vndFmt =
-            java.text.NumberFormat.getCurrencyInstance(new java.util.Locale("vi","VN"));
+
 
     // ==== Lấy chuỗi khoảng thời gian lọc ====
     private String rangeLabel() {
@@ -530,9 +539,7 @@ public class RevenueManagerJDialog extends javax.swing.JFrame implements Revenue
 
     // ====================== Excel: Doanh thu từng nhân viên ======================
     private void exportEmployeeToExcel() {
-        // Làm tươi dữ liệu theo filter hiện tại (tuỳ chọn)
         fillAll();
-
         java.io.File file = chooseFile("Lưu Excel - Doanh thu từng nhân viên",
                                        "DoanhThuNhanVien.xlsx", ".xlsx");
         if (file == null) return;
@@ -541,55 +548,110 @@ public class RevenueManagerJDialog extends javax.swing.JFrame implements Revenue
             org.apache.poi.ss.usermodel.Sheet sh = wb.createSheet("Doanh thu NV");
             int rowIdx = 0;
 
-            // Styles
+            // ===== Styles =====
+            org.apache.poi.ss.usermodel.Font fontHeader = wb.createFont();
+            fontHeader.setFontName("Times New Roman");
+            fontHeader.setFontHeightInPoints((short)13);
+            fontHeader.setBold(true);
+
             org.apache.poi.ss.usermodel.CellStyle header = wb.createCellStyle();
-            org.apache.poi.ss.usermodel.Font bold = wb.createFont(); bold.setBold(true); header.setFont(bold);
+            header.setFont(fontHeader);
+            header.setFillForegroundColor(org.apache.poi.ss.usermodel.IndexedColors.YELLOW.getIndex());
+            header.setFillPattern(org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND);
+            header.setBorderTop(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            header.setBorderBottom(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            header.setBorderLeft(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            header.setBorderRight(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+
+            org.apache.poi.ss.usermodel.Font fontBody = wb.createFont();
+            fontBody.setFontName("Times New Roman");
+            fontBody.setFontHeightInPoints((short)13);
+
+            org.apache.poi.ss.usermodel.DataFormat df = wb.createDataFormat();
+
+            org.apache.poi.ss.usermodel.CellStyle bodyText = wb.createCellStyle();
+            bodyText.setFont(fontBody);
+            bodyText.setBorderTop(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            bodyText.setBorderBottom(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            bodyText.setBorderLeft(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            bodyText.setBorderRight(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+
+            org.apache.poi.ss.usermodel.CellStyle bodyInt = wb.createCellStyle();
+            bodyInt.setFont(fontBody);
+            bodyInt.setDataFormat(df.getFormat("0"));
+            bodyInt.setBorderTop(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            bodyInt.setBorderBottom(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            bodyInt.setBorderLeft(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            bodyInt.setBorderRight(org.apache.poi.ss.usermodel.BorderStyle.THIN);
 
             org.apache.poi.ss.usermodel.CellStyle money = wb.createCellStyle();
-            org.apache.poi.ss.usermodel.DataFormat df = wb.createDataFormat();
+            money.setFont(fontBody);
             money.setDataFormat(df.getFormat("#,##0\" đ\""));
+            money.setBorderTop(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            money.setBorderBottom(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            money.setBorderLeft(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            money.setBorderRight(org.apache.poi.ss.usermodel.BorderStyle.THIN);
 
-            // Title + range
-            sh.createRow(rowIdx++).createCell(0).setCellValue("BÁO CÁO DOANH THU TỪNG NHÂN VIÊN");
-            sh.createRow(rowIdx++).createCell(0).setCellValue(rangeLabel());
+            org.apache.poi.ss.usermodel.Font fontTitle = wb.createFont();
+            fontTitle.setFontName("Times New Roman");
+            fontTitle.setFontHeightInPoints((short)13);
+            fontTitle.setBold(true);
+            org.apache.poi.ss.usermodel.CellStyle titleStyle = wb.createCellStyle();
+            titleStyle.setFont(fontTitle);
+
+            // ===== Title =====
+            org.apache.poi.ss.usermodel.Row rowTitle = sh.createRow(rowIdx++);
+            org.apache.poi.ss.usermodel.Cell cTitle = rowTitle.createCell(0);
+            cTitle.setCellValue("BÁO CÁO DOANH THU TỪNG NHÂN VIÊN");
+            cTitle.setCellStyle(titleStyle);
+
+            org.apache.poi.ss.usermodel.Row rowRange = sh.createRow(rowIdx++);
+            org.apache.poi.ss.usermodel.Cell cRange = rowRange.createCell(0);
+            cRange.setCellValue(rangeLabel());
+            cRange.setCellStyle(titleStyle);
             rowIdx++;
 
-            // Header
+            // ===== Header =====
             org.apache.poi.ss.usermodel.Row h = sh.createRow(rowIdx++);
-            h.createCell(0).setCellValue("STT");
-            h.createCell(1).setCellValue("Họ Tên Nhân Viên");
-            h.createCell(2).setCellValue("Doanh Thu");
-            for (int c = 0; c <= 2; c++) h.getCell(c).setCellStyle(header);
+            String[] headers = {"STT", "Họ Tên Nhân Viên", "Doanh Thu"};
+            for (int i = 0; i < headers.length; i++) {
+                org.apache.poi.ss.usermodel.Cell cell = h.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(header);
+            }
 
-            // Data
+            // ===== Data =====
             javax.swing.table.TableModel m = tblEmployee.getModel();
             java.math.BigDecimal sum = java.math.BigDecimal.ZERO;
             for (int i = 0; i < m.getRowCount(); i++) {
                 org.apache.poi.ss.usermodel.Row r = sh.createRow(rowIdx++);
                 r.createCell(0).setCellValue(i + 1);
-                r.createCell(1).setCellValue(String.valueOf(m.getValueAt(i, 0)));
+                r.getCell(0).setCellStyle(bodyInt);
 
-                // lấy số từ chuỗi tiền tệ (loại bỏ ký tự không phải số)
+                r.createCell(1).setCellValue(String.valueOf(m.getValueAt(i, 0)));
+                r.getCell(1).setCellStyle(bodyText);
+
                 String raw = String.valueOf(m.getValueAt(i, 1)).replaceAll("[^\\d]", "");
                 java.math.BigDecimal val = raw.isEmpty() ? java.math.BigDecimal.ZERO : new java.math.BigDecimal(raw);
                 sum = sum.add(val);
 
-                org.apache.poi.ss.usermodel.Cell c2 = r.createCell(2);
-                c2.setCellValue(val.doubleValue());
-                c2.setCellStyle(money);
+                r.createCell(2).setCellValue(val.doubleValue());
+                r.getCell(2).setCellStyle(money);
             }
 
-            // Tổng doanh thu (dòng cuối)
+            // ===== Tổng =====
             org.apache.poi.ss.usermodel.Row rSum = sh.createRow(rowIdx++);
             org.apache.poi.ss.usermodel.Cell cLabel = rSum.createCell(0);
             cLabel.setCellValue("Tổng doanh thu");
-            cLabel.setCellStyle(header);
-            rSum.createCell(1); // để trống
+            cLabel.setCellStyle(header); // nền vàng
+
+            org.apache.poi.ss.usermodel.Cell cEmpty = rSum.createCell(1);
+            cEmpty.setCellStyle(bodyText);
+
             org.apache.poi.ss.usermodel.Cell cSum = rSum.createCell(2);
             cSum.setCellValue(sum.doubleValue());
-            cSum.setCellStyle(money);
+            cSum.setCellStyle(money); // chỉ border, không fill
 
-            // Auto-size
             for (int c = 0; c <= 2; c++) sh.autoSizeColumn(c);
 
             try (java.io.FileOutputStream fos = new java.io.FileOutputStream(file)) {
@@ -602,10 +664,9 @@ public class RevenueManagerJDialog extends javax.swing.JFrame implements Revenue
         }
     }
 
-    // ====================== Excel: Thống kê món ăn (2 sheet) ======================
+    // ====================== Excel: Thống kê món ăn ======================
     private void exportDishesToExcel() {
         fillAll();
-
         java.io.File file = chooseFile("Lưu Excel - Thống kê món ăn",
                                        "ThongKeMonAn.xlsx", ".xlsx");
         if (file == null) return;
@@ -613,17 +674,56 @@ public class RevenueManagerJDialog extends javax.swing.JFrame implements Revenue
         try (org.apache.poi.xssf.usermodel.XSSFWorkbook wb = new org.apache.poi.xssf.usermodel.XSSFWorkbook()) {
             org.apache.poi.ss.usermodel.DataFormat df = wb.createDataFormat();
 
+            org.apache.poi.ss.usermodel.Font fontHeader = wb.createFont();
+            fontHeader.setFontName("Times New Roman");
+            fontHeader.setFontHeightInPoints((short)13);
+            fontHeader.setBold(true);
+
             org.apache.poi.ss.usermodel.CellStyle header = wb.createCellStyle();
-            org.apache.poi.ss.usermodel.Font bold = wb.createFont(); bold.setBold(true); header.setFont(bold);
+            header.setFont(fontHeader);
+            header.setFillForegroundColor(org.apache.poi.ss.usermodel.IndexedColors.YELLOW.getIndex());
+            header.setFillPattern(org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND);
+            header.setBorderTop(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            header.setBorderBottom(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            header.setBorderLeft(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            header.setBorderRight(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+
+            org.apache.poi.ss.usermodel.Font fontTitle = wb.createFont();
+            fontTitle.setFontName("Times New Roman");
+            fontTitle.setFontHeightInPoints((short)13);
+            fontTitle.setBold(true);
+            org.apache.poi.ss.usermodel.CellStyle titleStyle = wb.createCellStyle();
+            titleStyle.setFont(fontTitle);
+
+            org.apache.poi.ss.usermodel.Font fontBody = wb.createFont();
+            fontBody.setFontName("Times New Roman");
+            fontBody.setFontHeightInPoints((short)13);
+
+            org.apache.poi.ss.usermodel.CellStyle bodyText = wb.createCellStyle();
+            bodyText.setFont(fontBody);
+            bodyText.setBorderTop(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            bodyText.setBorderBottom(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            bodyText.setBorderLeft(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            bodyText.setBorderRight(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+
+            org.apache.poi.ss.usermodel.CellStyle bodyInt = wb.createCellStyle();
+            bodyInt.setFont(fontBody);
+            bodyInt.setDataFormat(df.getFormat("0"));
+            bodyInt.setBorderTop(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            bodyInt.setBorderBottom(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            bodyInt.setBorderLeft(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            bodyInt.setBorderRight(org.apache.poi.ss.usermodel.BorderStyle.THIN);
 
             org.apache.poi.ss.usermodel.CellStyle money = wb.createCellStyle();
+            money.setFont(fontBody);
             money.setDataFormat(df.getFormat("#,##0\" đ\""));
+            money.setBorderTop(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            money.setBorderBottom(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            money.setBorderLeft(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            money.setBorderRight(org.apache.poi.ss.usermodel.BorderStyle.THIN);
 
-            // Sheet 1: Top bán chạy
-            fillDishSheet(wb, "Top bán chạy", tblMostPopularDishes, header, money);
-
-            // Sheet 2: Top ít bán
-            fillDishSheet(wb, "Top ít bán", tblLeastPopularDishes, header, money);
+            fillDishSheet(wb, "Top bán chạy", tblMostPopularDishes, header, titleStyle, bodyText, bodyInt, money);
+            fillDishSheet(wb, "Top ít bán",   tblLeastPopularDishes, header, titleStyle, bodyText, bodyInt, money);
 
             try (java.io.FileOutputStream fos = new java.io.FileOutputStream(file)) {
                 wb.write(fos);
@@ -636,25 +736,35 @@ public class RevenueManagerJDialog extends javax.swing.JFrame implements Revenue
     }
 
     private void fillDishSheet(org.apache.poi.xssf.usermodel.XSSFWorkbook wb, String sheetName,
-                               javax.swing.JTable table, org.apache.poi.ss.usermodel.CellStyle header,
+                               javax.swing.JTable table,
+                               org.apache.poi.ss.usermodel.CellStyle header,
+                               org.apache.poi.ss.usermodel.CellStyle titleStyle,
+                               org.apache.poi.ss.usermodel.CellStyle bodyText,
+                               org.apache.poi.ss.usermodel.CellStyle bodyInt,
                                org.apache.poi.ss.usermodel.CellStyle money) {
 
         org.apache.poi.ss.usermodel.Sheet sh = wb.createSheet(sheetName);
         int rowIdx = 0;
 
-        // Title + range
-        sh.createRow(rowIdx++).createCell(0).setCellValue("THỐNG KÊ MÓN ĂN - " + sheetName.toUpperCase());
-        sh.createRow(rowIdx++).createCell(0).setCellValue(rangeLabel());
+        org.apache.poi.ss.usermodel.Row rowTitle = sh.createRow(rowIdx++);
+        org.apache.poi.ss.usermodel.Cell cTitle = rowTitle.createCell(0);
+        cTitle.setCellValue("THỐNG KÊ MÓN ĂN - " + sheetName.toUpperCase());
+        cTitle.setCellStyle(titleStyle);
+
+        org.apache.poi.ss.usermodel.Row rowRange = sh.createRow(rowIdx++);
+        org.apache.poi.ss.usermodel.Cell cRange = rowRange.createCell(0);
+        cRange.setCellValue(rangeLabel());
+        cRange.setCellStyle(titleStyle);
         rowIdx++;
 
-        // Header
         org.apache.poi.ss.usermodel.Row h = sh.createRow(rowIdx++);
-        h.createCell(0).setCellValue("STT");       h.getCell(0).setCellStyle(header);
-        h.createCell(1).setCellValue("Tên món");   h.getCell(1).setCellStyle(header);
-        h.createCell(2).setCellValue("Số lần gọi");h.getCell(2).setCellStyle(header);
-        h.createCell(3).setCellValue("Tổng tiền"); h.getCell(3).setCellStyle(header);
+        String[] headers = {"STT", "Tên món", "Số lần gọi", "Tổng tiền"};
+        for (int i = 0; i < headers.length; i++) {
+            org.apache.poi.ss.usermodel.Cell cell = h.createCell(i);
+            cell.setCellValue(headers[i]);
+            cell.setCellStyle(header);
+        }
 
-        // Data
         javax.swing.table.TableModel m = table.getModel();
         for (int i = 0; i < m.getRowCount(); i++) {
             Object name = m.getValueAt(i, 0);
@@ -664,27 +774,27 @@ public class RevenueManagerJDialog extends javax.swing.JFrame implements Revenue
 
             org.apache.poi.ss.usermodel.Row r = sh.createRow(rowIdx++);
             r.createCell(0).setCellValue(i + 1);
-            r.createCell(1).setCellValue(name.toString());
+            r.getCell(0).setCellStyle(bodyInt);
 
-            // "23 lần" -> 23
+            r.createCell(1).setCellValue(name.toString());
+            r.getCell(1).setCellStyle(bodyText);
+
             String qtyNum = qty.toString().replaceAll("\\D+", "");
             r.createCell(2).setCellValue(qtyNum.isEmpty() ? 0 : Integer.parseInt(qtyNum));
+            r.getCell(2).setCellStyle(bodyInt);
 
-            // "1,234,000đ" -> 1234000
             String raw = total.toString().replaceAll("[^\\d]", "");
             double v = raw.isEmpty() ? 0d : new java.math.BigDecimal(raw).doubleValue();
-            org.apache.poi.ss.usermodel.Cell cMoney = r.createCell(3);
-            cMoney.setCellValue(v);
-            cMoney.setCellStyle(money);
+            r.createCell(3).setCellValue(v);
+            r.getCell(3).setCellStyle(money);
         }
 
         for (int c = 0; c <= 3; c++) sh.autoSizeColumn(c);
     }
+
     // ====================== Excel: Thống kê chương trình khuyến mãi ======================
     private void exportPromotionsToExcel() {
-        // Làm tươi dữ liệu theo filter hiện tại
         fillAll();
-
         java.io.File file = chooseFile("Lưu Excel - Thống kê khuyến mãi",
                                        "ThongKeKhuyenMai.xlsx", ".xlsx");
         if (file == null) return;
@@ -693,81 +803,115 @@ public class RevenueManagerJDialog extends javax.swing.JFrame implements Revenue
             org.apache.poi.ss.usermodel.Sheet sh = wb.createSheet("KM đã dùng");
             int rowIdx = 0;
 
-            // Styles
+            org.apache.poi.ss.usermodel.Font fontHeader = wb.createFont();
+            fontHeader.setFontName("Times New Roman");
+            fontHeader.setFontHeightInPoints((short)13);
+            fontHeader.setBold(true);
+
             org.apache.poi.ss.usermodel.CellStyle header = wb.createCellStyle();
-            org.apache.poi.ss.usermodel.Font bold = wb.createFont(); bold.setBold(true); header.setFont(bold);
+            header.setFont(fontHeader);
+            header.setFillForegroundColor(org.apache.poi.ss.usermodel.IndexedColors.YELLOW.getIndex());
+            header.setFillPattern(org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND);
+            header.setBorderTop(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            header.setBorderBottom(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            header.setBorderLeft(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            header.setBorderRight(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+
+            org.apache.poi.ss.usermodel.Font fontBody = wb.createFont();
+            fontBody.setFontName("Times New Roman");
+            fontBody.setFontHeightInPoints((short)13);
 
             org.apache.poi.ss.usermodel.DataFormat df = wb.createDataFormat();
-            org.apache.poi.ss.usermodel.CellStyle percent = wb.createCellStyle();
-            percent.setDataFormat(df.getFormat("0%"));
+
+            org.apache.poi.ss.usermodel.CellStyle bodyText = wb.createCellStyle();
+            bodyText.setFont(fontBody);
+            bodyText.setBorderTop(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            bodyText.setBorderBottom(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            bodyText.setBorderLeft(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            bodyText.setBorderRight(org.apache.poi.ss.usermodel.BorderStyle.THIN);
 
             org.apache.poi.ss.usermodel.CellStyle intStyle = wb.createCellStyle();
+            intStyle.setFont(fontBody);
             intStyle.setDataFormat(df.getFormat("0"));
+            intStyle.setBorderTop(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            intStyle.setBorderBottom(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            intStyle.setBorderLeft(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            intStyle.setBorderRight(org.apache.poi.ss.usermodel.BorderStyle.THIN);
 
-            // Title + range
-            sh.createRow(rowIdx++).createCell(0).setCellValue("THỐNG KÊ CHƯƠNG TRÌNH KHUYẾN MÃI ĐÃ SỬ DỤNG");
-            sh.getRow(0).getCell(0).setCellStyle(header);
-            sh.createRow(rowIdx++).createCell(0).setCellValue(rangeLabel());
+            org.apache.poi.ss.usermodel.CellStyle percent = wb.createCellStyle();
+            percent.setFont(fontBody);
+            percent.setDataFormat(df.getFormat("0%"));
+            percent.setBorderTop(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            percent.setBorderBottom(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            percent.setBorderLeft(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+            percent.setBorderRight(org.apache.poi.ss.usermodel.BorderStyle.THIN);
+
+            org.apache.poi.ss.usermodel.Font fontTitle = wb.createFont();
+            fontTitle.setFontName("Times New Roman");
+            fontTitle.setFontHeightInPoints((short)13);
+            fontTitle.setBold(true);
+            org.apache.poi.ss.usermodel.CellStyle titleStyle = wb.createCellStyle();
+            titleStyle.setFont(fontTitle);
+
+            // ===== Title =====
+            org.apache.poi.ss.usermodel.Row rowTitle = sh.createRow(rowIdx++);
+            org.apache.poi.ss.usermodel.Cell cTitle = rowTitle.createCell(0);
+            cTitle.setCellValue("THỐNG KÊ CHƯƠNG TRÌNH KHUYẾN MÃI ĐÃ SỬ DỤNG");
+            cTitle.setCellStyle(titleStyle);
+
+            org.apache.poi.ss.usermodel.Row rowRange = sh.createRow(rowIdx++);
+            org.apache.poi.ss.usermodel.Cell cRange = rowRange.createCell(0);
+            cRange.setCellValue(rangeLabel());
+            cRange.setCellStyle(titleStyle);
             rowIdx++;
 
-            // Header
             org.apache.poi.ss.usermodel.Row h = sh.createRow(rowIdx++);
-            h.createCell(0).setCellValue("Mã Khuyến Mãi");
-            h.createCell(1).setCellValue("Tên Chương Trình");
-            h.createCell(2).setCellValue("Phần Trăm Giảm Giá");
-            h.createCell(3).setCellValue("Số Lần Dùng");
-            for (int c = 0; c <= 3; c++) h.getCell(c).setCellStyle(header);
+            String[] headers = {"Mã Khuyến Mãi", "Tên Chương Trình", "Phần Trăm Giảm Giá", "Số Lần Dùng"};
+            for (int i = 0; i < headers.length; i++) {
+                org.apache.poi.ss.usermodel.Cell cell = h.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(header);
+            }
 
-            // Data từ JTable
             javax.swing.table.TableModel m = tblPromotionUsage.getModel();
             int totalUsed = 0;
             for (int i = 0; i < m.getRowCount(); i++) {
                 Object idObj   = m.getValueAt(i, 0);
                 Object nameObj = m.getValueAt(i, 1);
-                Object rateObj = m.getValueAt(i, 2); // "10%"
+                Object rateObj = m.getValueAt(i, 2);
                 Object usedObj = m.getValueAt(i, 3);
                 if (idObj == null || nameObj == null || rateObj == null || usedObj == null) continue;
 
                 org.apache.poi.ss.usermodel.Row r = sh.createRow(rowIdx++);
-                // Mã KM
-                try {
-                    int id = Integer.parseInt(String.valueOf(idObj).replaceAll("\\D+", ""));
-                    org.apache.poi.ss.usermodel.Cell c0 = r.createCell(0);
-                    c0.setCellValue(id);
-                    c0.setCellStyle(intStyle);
-                } catch (Exception ex) {
-                    r.createCell(0).setCellValue(String.valueOf(idObj));
-                }
+                r.createCell(0).setCellValue(idObj.toString());
+                r.getCell(0).setCellStyle(bodyText);
 
-                // Tên CT
-                r.createCell(1).setCellValue(String.valueOf(nameObj));
+                r.createCell(1).setCellValue(nameObj.toString());
+                r.getCell(1).setCellStyle(bodyText);
 
-                // % giảm "10%" -> 0.10 + định dạng 0%
-                String digits = String.valueOf(rateObj).replaceAll("\\D+", "");
-                double rate = digits.isEmpty() ? 0d : Integer.parseInt(digits) / 100.0;
-                org.apache.poi.ss.usermodel.Cell c2 = r.createCell(2);
-                c2.setCellValue(rate);
-                c2.setCellStyle(percent);
+                String rateStr = rateObj.toString().replace("%", "").trim();
+                double rateVal = rateStr.isEmpty() ? 0 : Double.parseDouble(rateStr) / 100.0;
+                r.createCell(2).setCellValue(rateVal);
+                r.getCell(2).setCellStyle(percent);
 
-                // Số lần dùng
-                int used = 0;
-                try { used = Integer.parseInt(String.valueOf(usedObj).replaceAll("\\D+", "")); } catch (Exception ignore) {}
-                totalUsed += used;
-
-                org.apache.poi.ss.usermodel.Cell c3 = r.createCell(3);
-                c3.setCellValue(used);
-                c3.setCellStyle(intStyle);
+                int usedVal = Integer.parseInt(usedObj.toString().replaceAll("\\D+", ""));
+                totalUsed += usedVal;
+                r.createCell(3).setCellValue(usedVal);
+                r.getCell(3).setCellStyle(intStyle);
             }
 
-            // Tổng số lần dùng
+            // ===== Tổng =====
             org.apache.poi.ss.usermodel.Row rSum = sh.createRow(rowIdx++);
             org.apache.poi.ss.usermodel.Cell cLabel = rSum.createCell(0);
             cLabel.setCellValue("TỔNG SỐ LẦN DÙNG");
-            cLabel.setCellStyle(header);
-            rSum.createCell(1); rSum.createCell(2);
+            cLabel.setCellStyle(header); // nền vàng
+
+            rSum.createCell(1).setCellStyle(bodyText);
+            rSum.createCell(2).setCellStyle(bodyText);
+
             org.apache.poi.ss.usermodel.Cell cTotal = rSum.createCell(3);
             cTotal.setCellValue(totalUsed);
-            cTotal.setCellStyle(intStyle);
+            cTotal.setCellStyle(intStyle); // chỉ border, không fill
 
             for (int c = 0; c <= 3; c++) sh.autoSizeColumn(c);
 
