@@ -532,20 +532,22 @@ public class PromotionManager extends javax.swing.JFrame {
         this.setTo(range.getEnd());
     }
 
-    public void fillToTable() {
-        DefaultTableModel model = (DefaultTableModel) tblPromotion.getModel();
-        model.setRowCount(0);
-        items = dao.findAll();
-        for (Promotion p : items) {
-            Object[] row = {
-                p.getId(),
-                p.getName(),
-                XDate.format(p.getStartDate(), Promotion.DATE_PATTERN),
-                XDate.format(p.getEndDate(), Promotion.DATE_PATTERN),
-                p.getDiscountRate() * 100 + "%",};
-            model.addRow(row);
-        }
+   public void fillToTable() {
+    DefaultTableModel model = (DefaultTableModel) tblPromotion.getModel();
+    model.setRowCount(0);
+    items = dao.findAll();
+    for (Promotion p : items) {
+        Object[] row = {
+            p.getId(),
+            p.getName(),
+            XDate.format(p.getStartDate(), Promotion.DATE_PATTERN),
+            XDate.format(p.getEndDate(), Promotion.DATE_PATTERN),
+            // discountRate là BigDecimal, cần chuyển sang phần trăm
+            p.getDiscountRate().multiply(BigDecimal.valueOf(100)).stripTrailingZeros().toPlainString() + "%"
+        };
+        model.addRow(row);
     }
+}
 
     public void setForm(Promotion entity) {
         txtId.setText(XStr.valueOf(entity.getId()));
@@ -557,33 +559,35 @@ public class PromotionManager extends javax.swing.JFrame {
     }
 
     public Promotion getForm() {
-        try {
-            Promotion entity = new Promotion();
+    try {
+        Promotion entity = new Promotion();
 
-            String idText = txtId.getText().trim();
-            if (!idText.isEmpty()) {
-                entity.setId(Integer.parseInt(idText));
-            }
-
-            entity.setName(txtName.getText().trim());
-
-            entity.setStartDate(XDate.parse(txtStartDate.getText().trim(), Promotion.DATE_PATTERN));
-            entity.setEndDate(XDate.parse(txtEndDate.getText().trim(), Promotion.DATE_PATTERN));
-
-            String discountText = txtDiscount.getText().trim().replace("%", "");
-            double discount = Double.parseDouble(discountText) / 100;
-            entity.setDiscountRate((double) 0.1);
-
-            return entity;
-        } catch (NumberFormatException ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Giá trị số không hợp lệ (ID hoặc phần trăm giảm giá).");
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Lỗi không xác định: " + ex.getMessage());
+        String idText = txtId.getText().trim();
+        if (!idText.isEmpty()) {
+            entity.setId(Integer.parseInt(idText));
         }
-        return null;
+
+        entity.setName(txtName.getText().trim());
+
+        entity.setStartDate(XDate.parse(txtStartDate.getText().trim(), Promotion.DATE_PATTERN));
+        entity.setEndDate(XDate.parse(txtEndDate.getText().trim(), Promotion.DATE_PATTERN));
+
+        String discountText = txtDiscount.getText().trim().replace("%", "");
+        double discount = Double.parseDouble(discountText) / 100;
+
+        // Dùng BigDecimal để lưu tỉ lệ giảm giá
+        entity.setDiscountRate(BigDecimal.valueOf(discount));
+
+        return entity;
+    } catch (NumberFormatException ex) {
+        ex.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Giá trị số không hợp lệ (ID hoặc phần trăm giảm giá).");
+    } catch (Exception ex) {
+        ex.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Lỗi không xác định: " + ex.getMessage());
     }
+    return null;
+}
 
     public void create() {
         Promotion entity = this.getForm();
