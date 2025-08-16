@@ -22,9 +22,9 @@ import java.util.Date;
 public class Promotion {
     public static final String DATE_PATTERN = "yyyy-MM-dd";
     
-    private Integer Id;
-    private String Name;
-    private Date StartDate;
-    private Date EndDate;
-    private Double DiscountRate;
+    private Integer id;
+    private String name;
+    private Date startDate;
+    private Date endDate;
+    private BigDecimal discountRate;
 }
