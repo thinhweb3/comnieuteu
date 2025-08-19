@@ -8,7 +8,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.Data;
-import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -25,6 +24,7 @@ public class Employee {
     private Integer gender;
     private Date birthDate;
     private String phone;
+    private String gmail;
     private String username;
     private String password;
     private String position;
