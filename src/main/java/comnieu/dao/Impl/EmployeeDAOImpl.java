@@ -14,39 +14,49 @@ import java.util.List;
  */
 public class EmployeeDAOImpl implements EmployeeDAO {
 
-    // Thêm [Role] để tránh lỗi từ khóa SQL Server
+    // Thêm [Role] và Gmail để phù hợp với bảng SQL Server
     final String insertSql = """
-        INSERT INTO Employee (FullName, Gender, BirthDate, Phone, Username, Password, Position, [Role])
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO Employee (FullName, Gender, BirthDate, Phone, Gmail, Username, Password, Position, [Role])
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     """;
 
     final String updateSql = """
         UPDATE Employee
-        SET FullName = ?, Gender = ?, BirthDate = ?, Phone = ?, Username = ?, Password = ?, Position = ?, [Role] = ?
+        SET FullName = ?, Gender = ?, BirthDate = ?, Phone = ?, Gmail = ?, Username = ?, Password = ?, Position = ?, [Role] = ?
         WHERE Id = ?
     """;
 
     final String deleteSql = "DELETE FROM Employee WHERE Id = ?";
 
     final String findAllSql = """
-        SELECT Id, FullName, Gender, BirthDate, Phone, Username, Password, Position, [Role] as Role
+        SELECT Id, FullName, Gender, BirthDate, Phone, Gmail, Username, Password, Position, [Role] as Role
         FROM Employee
     """;
 
     final String findByIdSql = """
-        SELECT Id, FullName, Gender, BirthDate, Phone, Username, Password, Position, [Role] as Role
+        SELECT Id, FullName, Gender, BirthDate, Phone, Gmail, Username, Password, Position, [Role] as Role
         FROM Employee WHERE Id = ?
     """;
 
     final String findByUsernameSql = """
-        SELECT Id, FullName, Gender, BirthDate, Phone, Username, Password, Position, [Role] as Role
+        SELECT Id, FullName, Gender, BirthDate, Phone, Gmail, Username, Password, Position, [Role] as Role
         FROM Employee WHERE Username = ?
     """;
 
     final String findByRoleSql = """
-        SELECT Id, FullName, Gender, BirthDate, Phone, Username, Password, Position, [Role] as Role
+        SELECT Id, FullName, Gender, BirthDate, Phone, Gmail, Username, Password, Position, [Role] as Role
         FROM Employee WHERE [Role] = ?
     """;
+
+    final String findByGmailSql = """
+        SELECT Id, FullName, Gender, BirthDate, Phone, Gmail, Username, Password, Position, [Role] as Role
+        FROM Employee WHERE Gmail = ?
+    """;
+    final String findByUsernameAndGmailSql = """
+    SELECT Id, FullName, Gender, BirthDate, Phone, Gmail, Username, Password, Position, [Role] as Role
+    FROM Employee WHERE Username = ? AND Gmail = ?
+""";
+
 
     @Override
     public Employee create(Employee entity) {
@@ -55,6 +65,7 @@ public class EmployeeDAOImpl implements EmployeeDAO {
             entity.getGender(),
             entity.getBirthDate(),
             entity.getPhone(),
+            entity.getGmail(),
             entity.getUsername(),
             entity.getPassword(),
             entity.getPosition(),
@@ -72,6 +83,7 @@ public class EmployeeDAOImpl implements EmployeeDAO {
             entity.getGender(),
             entity.getBirthDate(),
             entity.getPhone(),
+            entity.getGmail(),
             entity.getUsername(),
             entity.getPassword(),
             entity.getPosition(),
@@ -105,4 +117,14 @@ public class EmployeeDAOImpl implements EmployeeDAO {
     public List<Employee> findByRole(Integer role) {
         return XQuery.getBeanList(Employee.class, findByRoleSql, role);
     }
+
+    @Override
+    public Employee findByGmail(String gmail) {
+        return XQuery.getSingleBean(Employee.class, findByGmailSql, gmail);
+    }
+    @Override
+public Employee findByUsernameAndGmail(String username, String gmail) {
+    return XQuery.getSingleBean(Employee.class, findByUsernameAndGmailSql, username, gmail);
+}
+
 }
