@@ -27,11 +27,15 @@ import java.util.Date;
 import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.table.DefaultTableModel;
+import comnieu.net.Message;
+import comnieu.net.SocketServer;
+import javax.swing.SwingUtilities;
+
 /**
  *
  * @author Admin
  */
-public class BillJDialog extends JDialog implements BillController { 
+public class BillJDialog extends javax.swing.JDialog implements BillController { 
     private DishDAO dishDAO = new DishDAOImpl();
     private Bill bill;
     private final BillDAO billDao = new BillDAOImpl();
@@ -46,15 +50,14 @@ public void setBill(Bill bill) {
 
     /**
      * Creates new form BillJDialog
-     * @param owner
+     * @param parent
      * @param modal
      */
-public BillJDialog(Dialog owner, boolean modal) {
-    super(owner, modal);
-    initComponents();
-
-
-}
+public BillJDialog(java.awt.Frame parent, boolean modal) {
+        super(parent, modal);
+        initComponents();
+        btnPayQR.addActionListener(e -> showVietQRDialog());
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -83,6 +86,7 @@ public BillJDialog(Dialog owner, boolean modal) {
         btnRemove = new javax.swing.JButton();
         btnCancel = new javax.swing.JButton();
         btnCheckout = new javax.swing.JButton();
+        btnPayQR = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setBackground(new java.awt.Color(204, 255, 255));
@@ -161,6 +165,8 @@ public BillJDialog(Dialog owner, boolean modal) {
             }
         });
 
+        btnPayQR.setText("Thanh Toán Online");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -201,6 +207,8 @@ public BillJDialog(Dialog owner, boolean modal) {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnAdd)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btnPayQR)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnCheckout)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(btnCancel)))
@@ -236,7 +244,8 @@ public BillJDialog(Dialog owner, boolean modal) {
                     .addComponent(btnAdd)
                     .addComponent(btnCancel)
                     .addComponent(btnCheckout)
-                    .addComponent(btnRemove))
+                    .addComponent(btnRemove)
+                    .addComponent(btnPayQR))
                 .addContainerGap(7, Short.MAX_VALUE))
         );
 
@@ -276,12 +285,31 @@ public BillJDialog(Dialog owner, boolean modal) {
     private void formWindowOpened(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowOpened
         // TODO add your handling code here:
                 this.open(); 
+                
+                    if (App.SERVER_SINGLETON != null) {
+        App.SERVER_SINGLETON.onMessage((Message msg) -> {
+            SwingUtilities.invokeLater(() -> {
+                    if ("BILL_CREATED".equals(msg.type) || "BILL_UPDATED".equals(msg.type)) {
+                    // chỉ refresh khi đúng bàn của bill hiện tại
+                    if (bill != null && msg.tableId == bill.getTableId()) {
+                        fillBillDetails();   // ← không addRow ở đây
+                    }
+                }
+
+            });
+        });
+    }
 
     }//GEN-LAST:event_formWindowOpened
 
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
         // TODO add your handling code here:
                 this.close(); 
+
+
+
+
+
 
     }//GEN-LAST:event_formWindowClosed
 
@@ -296,7 +324,7 @@ public BillJDialog(Dialog owner, boolean modal) {
         Bill bill = billDao.findById(billId);
 
         if (bill != null) {
-            BillJDialog dialog = new BillJDialog(new JDialog(), true); // dùng null nếu không có JFrame
+            BillJDialog dialog = new BillJDialog(new java.awt.Frame(), true); // dùng null nếu không có JFrame
             dialog.setBill(bill); // ⚠️ Quan trọng: setBill trước khi hiển thị
             dialog.setLocationRelativeTo(null); // mở giữa màn hình
             dialog.setVisible(true);
@@ -395,22 +423,23 @@ void setForm(Bill bill) {
         txtCheckout.setText(XDate.format(bill.getCheckOut(), "HH:mm:ss dd-MM-yyyy")); 
     }
 
-    // 🔒 Kiểm tra trạng thái của Card
-DiningTableDAO tableDao = new DiningTableDAOImpl();
-DiningTable table = tableDao.findById(bill.getTableId());
+    DiningTableDAO tableDao = new DiningTableDAOImpl();
+    DiningTable table = tableDao.findById(bill.getTableId());
 
-boolean editable = (bill.getStatus() == 0) && (table != null && table.getStatus() == 0);
+       boolean editable = bill.getStatus() == Bill.BillStatus.Servicing.getValue()
+                && table != null
+                && table.getStatus() == 1;
+        btnAdd.setEnabled(editable); 
+        btnCancel.setEnabled(editable); 
+        btnCheckout.setEnabled(editable); 
+        btnRemove.setEnabled(editable); 
+    }
 
-
-    btnAdd.setEnabled(editable); 
-    btnCancel.setEnabled(editable); 
-    btnCheckout.setEnabled(editable); 
-    btnRemove.setEnabled(editable); 
-}
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAdd;
     private javax.swing.JButton btnCancel;
     private javax.swing.JButton btnCheckout;
+    private javax.swing.JButton btnPayQR;
     private javax.swing.JButton btnRemove;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
@@ -451,7 +480,7 @@ boolean editable = (bill.getStatus() == 0) && (table != null && table.getStatus(
                     "", // discount chưa có
                     d.getQuantity(),
                     d.getUnitPrice().multiply(new java.math.BigDecimal(d.getQuantity())),
-                    Boolean.FALSE // <-- cột checkbox
+                    Boolean.FALSE
                 };
                 model.addRow(row);
             }
@@ -480,6 +509,104 @@ public void open() {
 public void close() {
     this.dispose(); // đóng dialog
 }
+private static String urlEncode(String s) {
+    try {
+        return java.net.URLEncoder.encode(s, java.nio.charset.StandardCharsets.UTF_8.toString());
+    } catch (Exception e) {
+        return s;
+    }
+}
 
+private String buildVietQRUrl(String bankCode, String accountNo, long amount, String addInfo) {
+    String template = "compact"; // hoặc "print"
+    String base = String.format("https://img.vietqr.io/image/%s-%s-%s.png", bankCode, accountNo, template);
+    return String.format("%s?amount=%d&addInfo=%s", base, amount, urlEncode(addInfo));
+}
 
+private long calcBillTotalVND() {
+    long total = 0;
+    for (int i = 0; i < tblBillDetails.getRowCount(); i++) {
+        // cột thành tiền (index 4) đang là BigDecimal
+        Object v = tblBillDetails.getValueAt(i, 4);
+        if (v instanceof java.math.BigDecimal bd) {
+            total += bd.longValue();
+        } else if (v != null) {
+            try { total += Long.parseLong(v.toString().replaceAll("\\D","")); } catch (Exception ignore) {}
+        }
+    }
+    return total;
+}
+
+private void showVietQRDialog() {
+    // 1) Tính tiền & nội dung CK
+    long amount = calcBillTotalVND();
+    String addInfo = "BILL-" + bill.getId() + "-TABLE-" + bill.getTableId();
+
+    // 2) URL VietQR
+    String bankCode = "Timo";        // TODO: đổi sang ngân hàng của bạn
+    String accountNo = "0337817635"; // TODO: đổi sang STK nhận tiền
+    String qrUrl = buildVietQRUrl(bankCode, accountNo, amount, addInfo);
+
+    // 3) Tải ảnh QR (qua URL)
+    javax.swing.JLabel img = new javax.swing.JLabel("Đang tải QR...");
+    new Thread(() -> {
+        try {
+            java.awt.Image imgData = javax.imageio.ImageIO.read(new java.net.URL(qrUrl));
+            if (imgData != null) {
+                java.awt.Image scaled = imgData.getScaledInstance(100, 100, java.awt.Image.SCALE_SMOOTH);
+                javax.swing.ImageIcon icon = new javax.swing.ImageIcon(imgData);
+                img.setText(null);
+                img.setIcon(icon);
+            } else {
+                img.setText("Không tải được QR");
+            }
+        } catch (Exception ex) {
+            img.setText("Lỗi tải QR: " + ex.getMessage());
+        }
+    }).start();
+
+    // 4) Dialog hiển thị
+    javax.swing.JPanel panel = new javax.swing.JPanel(new java.awt.BorderLayout(10,10));
+    javax.swing.JLabel lblInfo = new javax.swing.JLabel(
+        "<html>Tổng tiền: <b>" + String.format("%,d", amount) + "₫</b><br/>" +
+        "Nội dung CK: <b>" + addInfo + "</b><br/>" +
+        "Ngân hàng: <b>" + bankCode + "</b> – STK: <b>" + accountNo + "</b></html>"
+    );
+    panel.add(lblInfo, java.awt.BorderLayout.NORTH);
+    panel.add(new javax.swing.JScrollPane(img), java.awt.BorderLayout.CENTER);
+
+    javax.swing.JButton btnConfirm = new javax.swing.JButton("Đã nhận tiền");
+    javax.swing.JButton btnClose = new javax.swing.JButton("Đóng");
+
+    javax.swing.JPanel south = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT));
+    south.add(btnConfirm);
+    south.add(btnClose);
+    panel.add(south, java.awt.BorderLayout.SOUTH);
+
+    javax.swing.JDialog d = new javax.swing.JDialog(this, "Thanh toán VietQR", true);
+    d.setContentPane(panel);
+    d.setSize(600, 605);
+    d.setLocationRelativeTo(this);
+
+    btnConfirm.addActionListener(e -> {
+        try {
+            bill.setStatus(Bill.BillStatus.Completed.getValue());
+            bill.setCheckOut(new java.util.Date());
+            billDao.update(bill);
+            this.setForm(bill);
+            javax.swing.JOptionPane.showMessageDialog(d, "Đã xác nhận thanh toán.");
+            d.dispose();
+        } catch (Exception ex) {
+            javax.swing.JOptionPane.showMessageDialog(d, "Lỗi cập nhật bill: " + ex.getMessage());
+        }
+    });
+    btnClose.addActionListener(e -> d.dispose());
+
+    d.setVisible(true);
+}
+
+public class App {
+    // Manager sẽ gán biến này khi mở server. Employee để null.
+    public static SocketServer SERVER_SINGLETON = null;
+}
 }

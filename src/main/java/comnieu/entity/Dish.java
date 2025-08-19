@@ -1,3 +1,4 @@
+
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
@@ -24,7 +25,7 @@ public class Dish {
     private String name;
     private BigDecimal unitPrice;
     private String unit;
-    private String description;
+    private String image;
     private Integer categoryId;
     private Integer status;
     private Integer size;

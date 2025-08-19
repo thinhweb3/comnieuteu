@@ -13,4 +13,5 @@ import java.util.List;
  */
 public interface DiningTableDAO extends CrudDAO<DiningTable, Integer> {
     List<DiningTable> findByStatus(Integer status);
+    void updateStatus(Integer tableId, int status);
 }

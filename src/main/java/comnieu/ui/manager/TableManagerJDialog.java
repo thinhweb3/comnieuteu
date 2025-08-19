@@ -93,7 +93,7 @@ bgStatus.add(rdoLose);
                 {null, null, null, null}
             },
             new String [] {
-                "Mã Thẻ", "Tên bàn", "Trạng thái", ""
+                "Mã bàn", "Tên bàn", "Trạng thái", ""
             }
         ) {
             Class[] types = new Class [] {
@@ -222,16 +222,20 @@ bgStatus.add(rdoLose);
 
         jLabel2.setText("Trạng Thái");
 
-        rdoOperating.setText("Operating");
+        buttonGroup1.add(rdoOperating);
+        rdoOperating.setText("Availabel");
         rdoOperating.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 rdoOperatingActionPerformed(evt);
             }
         });
 
-        rdoLose.setText("Lose");
+        buttonGroup1.add(rdoLose);
+        rdoLose.setText("Occupied");
+        rdoLose.setToolTipText("");
 
-        rdoError.setText("Error");
+        buttonGroup1.add(rdoError);
+        rdoError.setText("Reserved");
 
         jLabel3.setText("Tên Bàn");
 
@@ -254,32 +258,27 @@ bgStatus.add(rdoLose);
                 .addComponent(btnMovePrevious, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnMoveNext, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 20, Short.MAX_VALUE)
                 .addComponent(btnMoveLast, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(52, 52, 52)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jLabel1)
-                            .addComponent(txtId, javax.swing.GroupLayout.DEFAULT_SIZE, 258, Short.MAX_VALUE)
-                            .addComponent(Jlabel2)
-                            .addComponent(jLabel3)
-                            .addComponent(txtName)))
+                        .addGap(50, 50, 50)
+                        .addComponent(rdoOperating)
+                        .addGap(18, 18, 18)
+                        .addComponent(rdoLose)
+                        .addGap(29, 29, 29)
+                        .addComponent(rdoError))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(15, 15, 15)
+                        .addGap(52, 52, 52)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(jLabel2)
-                                .addGap(210, 210, 210))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(rdoOperating)
-                                .addGap(187, 187, 187))
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addGap(131, 131, 131)
-                                .addComponent(rdoLose)
-                                .addGap(35, 35, 35)
-                                .addComponent(rdoError)))))
+                            .addComponent(jLabel2)
+                            .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                .addComponent(jLabel1)
+                                .addComponent(txtId, javax.swing.GroupLayout.DEFAULT_SIZE, 258, Short.MAX_VALUE)
+                                .addComponent(Jlabel2)
+                                .addComponent(jLabel3)
+                                .addComponent(txtName)))))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
@@ -295,9 +294,9 @@ bgStatus.add(rdoLose);
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(txtName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 9, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 23, Short.MAX_VALUE)
                 .addComponent(jLabel2)
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(rdoOperating)
                     .addComponent(rdoLose)

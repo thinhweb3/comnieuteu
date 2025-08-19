@@ -64,4 +64,10 @@ public class DiningTableDAOImpl implements DiningTableDAO {
     public List<DiningTable> findByStatus(Integer status) {
         return XQuery.getBeanList(DiningTable.class, findByStatusSql, status);
     }
+    
+    @Override
+    public void updateStatus(Integer tableId, int status) {
+    String sql = "UPDATE DiningTable SET Status = ? WHERE Id = ?";
+    XJdbc.executeUpdate(sql, status, tableId);
+    }
 }

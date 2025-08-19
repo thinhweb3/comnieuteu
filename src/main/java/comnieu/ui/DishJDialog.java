@@ -3,6 +3,8 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package comnieu.ui;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import comnieu.dao.CategoryDAO;
 import comnieu.dao.DishDAO;
 import comnieu.dao.impl.CategoryDAOImpl;
@@ -12,13 +14,22 @@ import comnieu.entity.BillDetail;
 import comnieu.entity.Category;
 import comnieu.entity.Dish;
 import comnieu.util.XDialog;
-import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.util.*;
 import javax.swing.*;
+import comnieu.net.SocketClient;
+import comnieu.net.Message;
+import comnieu.net.NetConfig;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
 
 
 /**
@@ -26,6 +37,8 @@ import javax.swing.*;
  * @author Admin
  */
 public class DishJDialog extends JDialog {
+    private SocketClient client;
+
 // thay vì:
 // private final ArrayList<BillDetail> selectedDishes = new ArrayList<>();
 private final Map<Integer, BillDetail> selectedDishes = new LinkedHashMap<>();
@@ -51,17 +64,7 @@ jScrollPane2.setViewportView(jPanel1);                 // (đã có rồi thì t
 
         setupCategoryPanelMap();
         loadAllDishesByCategory();
-        btnDatBan.addActionListener(e -> {
-    try {
-        for (BillDetail detail : selectedDishes.values()) {  // ✅ mỗi món 1 record
-            new comnieu.dao.impl.BillDetailDAOImpl().create(detail);
-        }
-        JOptionPane.showMessageDialog(this, "✅ Đã lưu các món vào hóa đơn!");
-        dispose();
-    } catch (Exception ex) {
-        JOptionPane.showMessageDialog(this, "❌ Lỗi khi lưu: " + ex.getMessage());
-    }
-});
+        
 
     }
 
@@ -119,7 +122,7 @@ jScrollPane2.setViewportView(jPanel1);                 // (đã có rồi thì t
 
         jLabel1.setText("jLabel1");
 
-        jLabel3.setText("jLabel1 - Giá");
+        jLabel3.setText("jLabel1  Giá");
 
         jLabel4.setText("jLabel1");
 
@@ -348,7 +351,7 @@ jScrollPane2.setViewportView(jPanel1);                 // (đã có rồi thì t
 
         jLabel8.setText("Tổng tiền:");
 
-        lblTongTien.setText("jLabel9");
+        lblTongTien.setText("0đ");
 
         btnDatBan.setText("Đặt bàn");
         btnDatBan.addActionListener(new java.awt.event.ActionListener() {
@@ -400,6 +403,45 @@ jScrollPane2.setViewportView(jPanel1);                 // (đã có rồi thì t
 
     private void btnDatBanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDatBanActionPerformed
         // TODO add your handling code here:
+          try {
+        // 1) Lưu xuống DB
+        for (BillDetail detail : selectedDishes.values()) {
+            new comnieu.dao.impl.BillDetailDAOImpl().create(detail);
+        }
+
+        // 2) Dựng message gửi manager theo dữ liệu đã chọn
+        Message msg = new Message();
+        msg.type = "BILL_UPDATED"; // hoặc "BILL_CREATED" nếu vừa tạo bill
+        msg.billId = String.valueOf(bill.getId());
+        msg.tableId = bill.getTableId();
+        msg.tableName = "Bàn #" + bill.getTableId();
+        msg.items = new ArrayList<>();
+
+        double total = 0;
+        for (BillDetail d : selectedDishes.values()) {
+            Dish dish = dishDao.findById(d.getDishId());
+
+            Message.Item it = new Message.Item();
+            it.dishId   = String.valueOf(d.getDishId());
+            it.dishName = (dish != null ? dish.getName() : "Món #" + d.getDishId());
+            it.quantity = d.getQuantity();
+            it.unitPrice = d.getUnitPrice().doubleValue(); // DECIMAL(18,2) -> double
+            it.discount = 0;                               // nếu có khuyến mãi thì set tại đây
+            it.amount = it.quantity * it.unitPrice * (1 - it.discount);
+
+            total += it.amount;
+            msg.items.add(it);
+        }
+        msg.total = total;
+
+        if (client != null) client.send(msg);
+
+        JOptionPane.showMessageDialog(this, "✅ Đã lưu món & gửi đơn cho quản lý!");
+        dispose();
+
+    } catch (Exception ex) {
+        JOptionPane.showMessageDialog(this, "❌ Lỗi khi đặt bàn/gửi đơn: " + ex.getMessage());
+    }
     }//GEN-LAST:event_btnDatBanActionPerformed
 
     /**
@@ -476,8 +518,8 @@ private void loadAllDishesByCategory() {
 
             panel.removeAll();
             panel.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 20));
-            int rows = (int) Math.ceil(dishesOfCategory.size() / 3.0);
-            panel.setLayout(new GridLayout(rows, 3, 20, 20));
+            int rows = (int) Math.ceil(dishesOfCategory.size() / 2.0);
+            panel.setLayout(new GridLayout(rows, 2, 20, 20));
             panel.setBackground(new Color(240, 240, 240));
             panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
@@ -504,7 +546,7 @@ private JPanel createDishPanel(Dish dish) {
     lblImage.setHorizontalAlignment(SwingConstants.CENTER);
     String imageFile = dish.getImage();  // Nếu CSDL có
 if (imageFile == null || imageFile.trim().isEmpty()) {
-    imageFile = dish.getName() + ".png";  // Tự tạo theo tên món
+    imageFile = dish.getImage() ;  // Tự tạo theo tên món
 }
 lblImage.setIcon(loadImage(imageFile));
 
@@ -553,18 +595,21 @@ updateSelectedDishesPanel();
 }
 private ImageIcon loadImage(String fileName) {
     try {
-        URL imgURL = getClass().getClassLoader().getResource("comnieu.img/" + fileName);
+        URL imgURL = getClass().getClassLoader().getResource("img/" + fileName);
         if (imgURL != null) {
-            Image img = new ImageIcon(imgURL).getImage();
-            return new ImageIcon(img.getScaledInstance(100, 100, Image.SCALE_SMOOTH));
+            return new ImageIcon(imgURL); // Giữ nguyên ảnh gốc
         } else {
-            System.err.println("❌ Không tìm thấy ảnh trong resources: " + fileName);
-            return new ImageIcon();
+            System.err.println("❌ Không tìm thấy ảnh: " + fileName);
         }
     } catch (Exception e) {
-        return new ImageIcon();
+        e.printStackTrace();
     }
+    return new ImageIcon();
 }
+
+
+
+
 
 private void updateSelectedDishesPanel() {
     jPanel1.removeAll();
@@ -642,7 +687,40 @@ private void commitQtyFromField(Integer dishId, JTextField txtQty) {
     }
     updateSelectedDishesPanel();
 }
+@Override
+public void setVisible(boolean b) {
+    if (b) {
+        try {
+            // host: IP máy quản lý, nếu cùng máy thì "127.0.0.1"
+                client = new SocketClient(NetConfig.MANAGER_HOST, NetConfig.PORT);
+                client.connect();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Không kết nối được quản lý: " + e.getMessage());
+        }
+    } else {
+        try { if (client != null) client.close(); } catch (Exception ignored) {}
+    }
+    super.setVisible(b);
+}
 
+
+private void addItemIfQty(List<Message.Item> list, String dishId, String name, JSpinner spinner,
+                          double unitPrice, double discount) {
+    int qty = 0;
+    if (spinner != null && spinner.getValue() instanceof Number) {
+        qty = ((Number)spinner.getValue()).intValue();
+    }
+    if (qty > 0) {
+        Message.Item it = new Message.Item();
+        it.dishId = dishId;
+        it.dishName = name;
+        it.quantity = qty;
+        it.unitPrice = unitPrice;
+        it.discount = discount;
+        it.amount = qty * unitPrice * (1 - discount);
+        list.add(it);
+    }
+}
 
 
 

@@ -20,11 +20,9 @@ import java.util.Date;
 @Builder
 @Data
 public class Promotion {
-    public static final String DATE_PATTERN = "yyyy-MM-dd";
-    
     private Integer id;
     private String name;
     private Date startDate;
     private Date endDate;
-    private BigDecimal discountRate;
+    private Float discountRate;
 }

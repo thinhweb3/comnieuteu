@@ -8,127 +8,133 @@ import comnieu.dao.BillDAO;
 import comnieu.entity.Bill;
 import comnieu.util.XJdbc;
 import comnieu.util.XQuery;
+
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
-/**
- *
- * @author Admin
- */
 public class BillDAOImpl implements BillDAO {
 
-    String createSql = """
-        INSERT INTO Bill (CreatedDate, CheckIn, CheckOut, Status, EmployeeId, TableId, PromotionId)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    """;
-    String updateSql = """
-        UPDATE Bill SET CreatedDate=?, CheckIn=?, CheckOut=?, Status=?, EmployeeId=?, TableId=?, PromotionId=?
-        WHERE Id=?
-    """;
-    String deleteSql = "DELETE FROM Bill WHERE Id=?";
-    String findAllSql = "SELECT * FROM Bill";
-    String findByIdSql = "SELECT * FROM Bill WHERE Id=?";
+    private static final String INSERT_WITH_PROMO =
+        "INSERT INTO Bill ([CreatedDate],[CheckIn],[CheckOut],[Status],[EmployeeId],[TableId],[PromotionId]) " +
+        "VALUES (?,?,?,?,?,?,?)";
 
-    String findByUsernameSql = "SELECT * FROM Bill WHERE EmployeeId = (SELECT Id FROM Employees WHERE Username=?)";
-    String findByTableIdSql = "SELECT * FROM Bill WHERE TableId=?";
-    String findByTimeRangeSql = "SELECT * FROM Bill WHERE CheckIn BETWEEN ? AND ? ORDER BY CheckIn DESC";
-    String findByDateRangeSql = "SELECT * FROM Bill WHERE CONVERT(DATE, CheckIn) BETWEEN ? AND ?";
-    String findServicingByTableIdSql = "SELECT * FROM Bill WHERE TableId=? AND Status=0";
-    String findByUserAndTimeRangeSql = """
-        SELECT * FROM Bill WHERE EmployeeId = (SELECT Id FROM Employees WHERE Username=?) 
-        AND CheckIn BETWEEN ? AND ?
-    """;
+    private static final String INSERT_NO_PROMO =
+        "INSERT INTO Bill ([CreatedDate],[CheckIn],[CheckOut],[Status],[EmployeeId],[TableId]) " +
+        "VALUES (?,?,?,?,?,?)";
 
+    private static final String UPDATE_SQL =
+        "UPDATE Bill SET [CreatedDate]=?,[CheckIn]=?,[CheckOut]=?,[Status]=?,[EmployeeId]=?,[TableId]=?,[PromotionId]=? " +
+        "WHERE [Id]=?";
+
+    private static final String DELETE_SQL = "DELETE FROM Bill WHERE [Id]=?";
+
+    private static final String FIND_ALL_SQL = "SELECT * FROM Bill";
+    private static final String FIND_BY_ID_SQL = "SELECT * FROM Bill WHERE [Id]=?";
+    private static final String FIND_BY_USERNAME_SQL =
+        "SELECT * FROM Bill WHERE [EmployeeId]=(SELECT [Id] FROM Employee WHERE [Username]=?)";
+    private static final String FIND_BY_TABLE_SQL = "SELECT * FROM Bill WHERE [TableId]=?";
+    private static final String FIND_BY_TIMERANGE_SQL =
+        "SELECT * FROM Bill WHERE [CheckIn] BETWEEN ? AND ? ORDER BY [CheckIn] DESC";
+    private static final String FIND_BY_DATERANGE_SQL =
+        "SELECT * FROM Bill WHERE CONVERT(DATE,[CheckIn]) BETWEEN ? AND ?";
+    private static final String FIND_SERVICING_BY_TABLE_SQL =
+        "SELECT TOP 1 * FROM Bill WHERE [TableId]=? AND [Status]=0 ORDER BY [Id] DESC";
+    private static final String FIND_BY_USER_TIMERANGE_SQL =
+        "SELECT * FROM Bill " +
+        "WHERE [EmployeeId]=(SELECT [Id] FROM Employee WHERE [Username]=?) " +
+        "  AND [CheckIn] BETWEEN ? AND ?";
+
+    // ===== CRUD =====
     @Override
-    public Bill create(Bill entity) {
-        Object[] values = {
-            entity.getCreatedDate(),
-            entity.getCheckIn(),
-            entity.getCheckOut(),
-            entity.getStatus(),
-            entity.getEmployeeId(),
-            entity.getTableId(),
-            entity.getPromotionId()
-        };
-        long id = XJdbc.executeInsert(createSql, values);
-        entity.setId(id);
-        return entity;
+    public Bill create(Bill e) {
+        // Ép đúng kiểu cho SQL Server:
+        java.sql.Date created = (e.getCreatedDate() == null)
+                ? new java.sql.Date(System.currentTimeMillis())
+                : new java.sql.Date(e.getCreatedDate().getTime());
+        java.sql.Timestamp checkIn = (e.getCheckIn() == null)
+                ? new java.sql.Timestamp(System.currentTimeMillis())
+                : new java.sql.Timestamp(e.getCheckIn().getTime());
+        java.sql.Timestamp checkOut = (e.getCheckOut() == null)
+                ? null
+                : new java.sql.Timestamp(e.getCheckOut().getTime());
+
+        long id;
+        if (e.getPromotionId() == null) {
+            id = XJdbc.executeInsert(INSERT_NO_PROMO,
+                    created, checkIn, checkOut, e.getStatus(),
+                    e.getEmployeeId(), e.getTableId());
+        } else {
+            id = XJdbc.executeInsert(INSERT_WITH_PROMO,
+                    created, checkIn, checkOut, e.getStatus(),
+                    e.getEmployeeId(), e.getTableId(), e.getPromotionId());
+        }
+        e.setId(id);
+        return e;
     }
 
     @Override
-    public void update(Bill entity) {
-        Object[] values = {
-            entity.getCreatedDate(),
-            entity.getCheckIn(),
-            entity.getCheckOut(),
-            entity.getStatus(),
-            entity.getEmployeeId(),
-            entity.getTableId(),
-            entity.getPromotionId(),
-            entity.getId()
-        };
-        XJdbc.executeUpdate(updateSql, values);
+    public void update(Bill e) {
+        java.sql.Date created = (e.getCreatedDate() == null)
+                ? null
+                : new java.sql.Date(e.getCreatedDate().getTime());
+        java.sql.Timestamp checkIn = (e.getCheckIn() == null)
+                ? null
+                : new java.sql.Timestamp(e.getCheckIn().getTime());
+        java.sql.Timestamp checkOut = (e.getCheckOut() == null)
+                ? null
+                : new java.sql.Timestamp(e.getCheckOut().getTime());
+
+        XJdbc.executeUpdate(UPDATE_SQL,
+                created, checkIn, checkOut, e.getStatus(),
+                e.getEmployeeId(), e.getTableId(), e.getPromotionId(),
+                e.getId());
     }
 
     @Override
     public void deleteById(Long id) {
-        XJdbc.executeUpdate(deleteSql, id);
+        XJdbc.executeUpdate(DELETE_SQL, id);
     }
 
     @Override
     public List<Bill> findAll() {
-        return XQuery.getBeanList(Bill.class, findAllSql);
+        return XQuery.getBeanList(Bill.class, FIND_ALL_SQL);
     }
 
     @Override
     public Bill findById(Long id) {
-        return XQuery.getSingleBean(Bill.class, findByIdSql, id);
+        return XQuery.getSingleBean(Bill.class, FIND_BY_ID_SQL, id);
     }
 
+    // ===== Queries mở rộng =====
     @Override
     public List<Bill> findByUsername(String username) {
-        return XQuery.getBeanList(Bill.class, findByUsernameSql, username);
+        return XQuery.getBeanList(Bill.class, FIND_BY_USERNAME_SQL, username);
     }
 
     @Override
     public List<Bill> findByTableId(Integer tableId) {
-        return XQuery.getBeanList(Bill.class, findByTableIdSql, tableId);
+        return XQuery.getBeanList(Bill.class, FIND_BY_TABLE_SQL, tableId);
     }
 
     @Override
     public List<Bill> findByTimeRange(Date begin, Date end) {
-        return XQuery.getBeanList(Bill.class, findByTimeRangeSql, begin, end);
+        // begin/end là java.util.Date – XJdbc sẽ map sang Timestamp
+        return XQuery.getBeanList(Bill.class, FIND_BY_TIMERANGE_SQL, begin, end);
     }
 
     @Override
     public List<Bill> findByDateRange(LocalDate from, LocalDate to) {
-        return XQuery.getBeanList(Bill.class, findByDateRangeSql, from, to);
-    }
-
-    @Override
-    public Bill findServicingByTableId(Integer tableId) {
-        Bill bill = XQuery.getSingleBean(Bill.class, findServicingByTableIdSql, tableId);
-        if (bill == null) {
-            Bill newBill = Bill.builder()
-                .tableId(tableId)
-                .createdDate(new Date())
-                .checkIn(new Date())
-                .status(0)
-                .build();
-            return this.create(newBill);
-        }
-        return bill;
+        return XQuery.getBeanList(Bill.class, FIND_BY_DATERANGE_SQL, from, to);
     }
 
     @Override
     public List<Bill> findByUserAndTimeRange(String username, Date begin, Date end) {
-        return XQuery.getBeanList(Bill.class, findByUserAndTimeRangeSql, username, begin, end);
+        return XQuery.getBeanList(Bill.class, FIND_BY_USER_TIMERANGE_SQL, username, begin, end);
     }
-    @Override
-public Bill findUnpaidByTableId(Long tableId) {
-    String sql = "SELECT * FROM Bill WHERE TableId = ? AND Status = 0";
-    return XQuery.getSingleBean(Bill.class, sql, tableId);
-}
 
+    @Override
+    public Bill findServicingByTableId(Integer tableId) {
+        return XQuery.getSingleBean(Bill.class, FIND_SERVICING_BY_TABLE_SQL, tableId);
+    }
 }

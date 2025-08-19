@@ -18,13 +18,13 @@ import java.util.List;
 public class DishDAOImpl implements DishDAO {
 
     final String insertSql = """
-        INSERT INTO Dish (Name, UnitPrice, Unit, Description, CategoryId, Status, Size)
+        INSERT INTO Dish (Name, UnitPrice, Unit, Image, CategoryId, Status, Size)
         VALUES (?, ?, ?, ?, ?, ?, ?)
     """;
 
     final String updateSql = """
         UPDATE Dish
-        SET Name=?, UnitPrice=?, Unit=?, Description=?, CategoryId=?, Status=?, Size=?
+        SET Name=?, UnitPrice=?, Unit=?, Image=?, CategoryId=?, Status=?, Size=?
         WHERE Id=?
     """;
 
@@ -39,7 +39,7 @@ public class DishDAOImpl implements DishDAO {
             entity.getName(),
             entity.getUnitPrice(),
             entity.getUnit(),
-            entity.getDescription(),
+            entity.getImage(),
             entity.getCategoryId(),
             entity.getStatus(),
             entity.getSize()
@@ -55,7 +55,7 @@ public class DishDAOImpl implements DishDAO {
             entity.getName(),
             entity.getUnitPrice(),
             entity.getUnit(),
-            entity.getDescription(),
+            entity.getImage(),
             entity.getCategoryId(),
             entity.getStatus(),
             entity.getSize(),

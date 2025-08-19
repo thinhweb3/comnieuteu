@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package comnieu.dao.impl;
 
 import comnieu.dao.EmployeeDAO;
@@ -18,22 +14,39 @@ import java.util.List;
  */
 public class EmployeeDAOImpl implements EmployeeDAO {
 
+    // Thêm [Role] để tránh lỗi từ khóa SQL Server
     final String insertSql = """
-        INSERT INTO Employee (FullName, Gender, BirthDate, Phone, Username, Password, Position, Role)
+        INSERT INTO Employee (FullName, Gender, BirthDate, Phone, Username, Password, Position, [Role])
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """;
 
     final String updateSql = """
         UPDATE Employee
-        SET FullName = ?, Gender = ?, BirthDate = ?, Phone = ?, Username = ?, Password = ?, Position = ?, Role = ?
+        SET FullName = ?, Gender = ?, BirthDate = ?, Phone = ?, Username = ?, Password = ?, Position = ?, [Role] = ?
         WHERE Id = ?
     """;
 
     final String deleteSql = "DELETE FROM Employee WHERE Id = ?";
-    final String findAllSql = "SELECT * FROM Employee";
-    final String findByIdSql = "SELECT * FROM Employee WHERE Id = ?";
-    final String findByUsernameSql = "SELECT * FROM Employee WHERE Username = ?";
-    final String findByRoleSql = "SELECT * FROM Employee WHERE Role = ?";
+
+    final String findAllSql = """
+        SELECT Id, FullName, Gender, BirthDate, Phone, Username, Password, Position, [Role] as Role
+        FROM Employee
+    """;
+
+    final String findByIdSql = """
+        SELECT Id, FullName, Gender, BirthDate, Phone, Username, Password, Position, [Role] as Role
+        FROM Employee WHERE Id = ?
+    """;
+
+    final String findByUsernameSql = """
+        SELECT Id, FullName, Gender, BirthDate, Phone, Username, Password, Position, [Role] as Role
+        FROM Employee WHERE Username = ?
+    """;
+
+    final String findByRoleSql = """
+        SELECT Id, FullName, Gender, BirthDate, Phone, Username, Password, Position, [Role] as Role
+        FROM Employee WHERE [Role] = ?
+    """;
 
     @Override
     public Employee create(Employee entity) {
