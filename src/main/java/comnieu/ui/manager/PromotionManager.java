@@ -11,15 +11,14 @@ import comnieu.util.TimeRange;
 import comnieu.util.XDate;
 import comnieu.util.XDialog;
 import comnieu.util.XStr;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.function.BiConsumer;
 import javax.swing.JOptionPane;
-import javax.swing.event.AncestorListener;
 import javax.swing.table.DefaultTableModel;
 import lombok.Getter;
 import lombok.Setter;
-
 /**
  *
  * @author amyas
@@ -32,13 +31,6 @@ public class PromotionManager extends javax.swing.JFrame {
     public PromotionManager() {
         initComponents();
         fillToTable();
-
-        tblPromotion.getSelectionModel()
-            .addListSelectionListener(e -> {
-                if (!e.getValueIsAdjusting() && tblPromotion.getSelectedRow() >= 0) {
-                    edit();             
-                }
-            });
     }
 
     /**
@@ -56,8 +48,8 @@ public class PromotionManager extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         tblPromotion = new javax.swing.JTable();
         jButton2 = new javax.swing.JButton();
-        btnCheckAll = new javax.swing.JButton();
-        btnUncheckAll = new javax.swing.JButton();
+        btnCheckall = new javax.swing.JButton();
+        btnUncheckall = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         txtStartDate = new javax.swing.JTextField();
@@ -82,12 +74,7 @@ public class PromotionManager extends javax.swing.JFrame {
 
         jButton1.setText("jButton1");
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        addWindowListener(new java.awt.event.WindowAdapter() {
-            public void windowOpened(java.awt.event.WindowEvent evt) {
-                formWindowOpened(evt);
-            }
-        });
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         tblPromotion.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -122,17 +109,17 @@ public class PromotionManager extends javax.swing.JFrame {
             }
         });
 
-        btnCheckAll.setText("Chọn tất cả");
-        btnCheckAll.addActionListener(new java.awt.event.ActionListener() {
+        btnCheckall.setText("Chọn tất cả");
+        btnCheckall.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnCheckAllActionPerformed(evt);
+                btnCheckallActionPerformed(evt);
             }
         });
 
-        btnUncheckAll.setText("Bỏ chọn tất cả");
-        btnUncheckAll.addActionListener(new java.awt.event.ActionListener() {
+        btnUncheckall.setText("Bỏ chọn tất cả");
+        btnUncheckall.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnUncheckAllActionPerformed(evt);
+                btnUncheckallActionPerformed(evt);
             }
         });
 
@@ -143,14 +130,14 @@ public class PromotionManager extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 565, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 564, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(btnUncheckall)
+                        .addGap(18, 18, 18)
                         .addComponent(jButton2)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnUncheckAll)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnCheckAll)))
+                        .addGap(18, 18, 18)
+                        .addComponent(btnCheckall)))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -160,8 +147,8 @@ public class PromotionManager extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jButton2)
-                    .addComponent(btnCheckAll)
-                    .addComponent(btnUncheckAll))
+                    .addComponent(btnCheckall)
+                    .addComponent(btnUncheckall))
                 .addContainerGap())
         );
 
@@ -213,7 +200,7 @@ public class PromotionManager extends javax.swing.JFrame {
                 .addGap(50, 50, 50)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(txtDiscount, javax.swing.GroupLayout.DEFAULT_SIZE, 162, Short.MAX_VALUE)
+                        .addComponent(txtDiscount, javax.swing.GroupLayout.DEFAULT_SIZE, 161, Short.MAX_VALUE)
                         .addGap(365, 365, 365))
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -329,7 +316,7 @@ public class PromotionManager extends javax.swing.JFrame {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(txtBegin, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(txtEnd, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -341,7 +328,8 @@ public class PromotionManager extends javax.swing.JFrame {
                             .addComponent(jLabel6)
                             .addComponent(jLabel7))))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(tabs, javax.swing.GroupLayout.PREFERRED_SIZE, 285, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(tabs, javax.swing.GroupLayout.PREFERRED_SIZE, 285, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
@@ -384,7 +372,7 @@ public class PromotionManager extends javax.swing.JFrame {
 
     private void tblPromotionMouseClicked(java.awt.event.MouseEvent evt) {                                          
         // TODO add your handling code here:
-        if (evt.getClickCount() == 2) {
+        if (evt.getClickCount() == 1) {
             this.edit();
         }
     }                                         
@@ -394,26 +382,14 @@ public class PromotionManager extends javax.swing.JFrame {
         this.deleteCheckedItems();
     }                                        
 
-    private void formWindowOpened(java.awt.event.WindowEvent evt) {                                  
+    private void btnCheckallActionPerformed(java.awt.event.ActionEvent evt) {                                            
         // TODO add your handling code here:
-        this.timeRangeSelected();
-        this.fillToTable();
-    }                                 
-
-    private void btnCheckAllActionPerformed(java.awt.event.ActionEvent evt) {                                            
-        // TODO add your handling code here:
-        btnCheckAll.addActionListener(e -> {
-    checkAllCheckboxes(true); // Chọn tất cả
-});
-
+        this.checkAll(rootPaneCheckingEnabled);
     }                                           
 
-    private void btnUncheckAllActionPerformed(java.awt.event.ActionEvent evt) {                                              
+    private void btnUncheckallActionPerformed(java.awt.event.ActionEvent evt) {                                              
         // TODO add your handling code here:
-        btnUncheckAll.addActionListener(e -> {
-    checkAllCheckboxes(false); // Bỏ chọn tất cả
-});
-
+        this.UncheckAll(rootPaneCheckingEnabled);
     }                                             
 
     /**
@@ -452,12 +428,12 @@ public class PromotionManager extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify                     
-    private javax.swing.JButton btnCheckAll;
+    private javax.swing.JButton btnCheckall;
     private javax.swing.JButton btnClear;
     private javax.swing.JButton btnCreate;
     private javax.swing.JButton btnDelete;
     private javax.swing.JButton btnFilter;
-    private javax.swing.JButton btnUncheckAll;
+    private javax.swing.JButton btnUncheckall;
     private javax.swing.JButton btnUpdate;
     private javax.swing.JComboBox<String> cboTimeRanges;
     private javax.swing.JButton jButton1;
@@ -483,7 +459,7 @@ public class PromotionManager extends javax.swing.JFrame {
     private javax.swing.JTextField txtStartDate;
     // End of variables declaration                   
 
-    private PromotionDAO dao = new PromotionDAOImpl();
+        private PromotionDAO dao = new PromotionDAOImpl();
     private List<Promotion> items = List.of();
 
     @Setter
@@ -512,19 +488,19 @@ public class PromotionManager extends javax.swing.JFrame {
     private void timeRangeSelected() {
         TimeRange range = TimeRange.today();
         switch (cboTimeRanges.getSelectedIndex()) {
-            case 0 -> { // today
+            case 0 -> {
                 range = TimeRange.today();
             }
-            case 1 -> { // this week
+            case 1 -> {
                 range = TimeRange.thisWeek();
             }
-            case 2 -> { // this month
+            case 2 -> {
                 range = TimeRange.thisMonth();
             }
-            case 3 -> { // this quarter
+            case 3 -> {
                 range = TimeRange.thisQuarter();
             }
-            case 4 -> { // this year
+            case 4 -> {
                 range = TimeRange.thisYear();
             }
         }
@@ -542,7 +518,7 @@ public class PromotionManager extends javax.swing.JFrame {
             p.getName(),
             XDate.format(p.getStartDate(), Promotion.DATE_PATTERN),
             XDate.format(p.getEndDate(), Promotion.DATE_PATTERN),
-            // discountRate là BigDecimal, cần chuyển sang phần trăm
+            
             p.getDiscountRate().multiply(BigDecimal.valueOf(100)).stripTrailingZeros().toPlainString() + "%"
         };
         model.addRow(row);
@@ -554,7 +530,7 @@ public class PromotionManager extends javax.swing.JFrame {
         txtName.setText(XStr.valueOf(entity.getName()));
         txtStartDate.setText(XDate.format(entity.getStartDate(), Promotion.DATE_PATTERN));
         txtEndDate.setText(XDate.format(entity.getEndDate(), Promotion.DATE_PATTERN));
-        txtDiscount.setText(String.valueOf(entity.getDiscountRate() * 100));
+        txtDiscount.setText(String.valueOf(entity.getDiscountRate()));
 
     }
 
@@ -575,7 +551,7 @@ public class PromotionManager extends javax.swing.JFrame {
         String discountText = txtDiscount.getText().trim().replace("%", "");
         double discount = Double.parseDouble(discountText) / 100;
 
-        // Dùng BigDecimal để lưu tỉ lệ giảm giá
+        
         entity.setDiscountRate(BigDecimal.valueOf(discount));
 
         return entity;
@@ -592,6 +568,7 @@ public class PromotionManager extends javax.swing.JFrame {
     public void create() {
         Promotion entity = this.getForm();
         dao.create(entity);
+        XDialog.alertSuccess("Thêm thành công");
         this.fillToTable();
     }
 
@@ -632,7 +609,7 @@ public class PromotionManager extends javax.swing.JFrame {
         txtStartDate.setText("");
         txtEndDate.setText("");
         txtDiscount.setText("");
-
+        
         tblPromotion.clearSelection();
     }
 
@@ -647,13 +624,16 @@ public class PromotionManager extends javax.swing.JFrame {
         }
     }
     
-    public void checkAllCheckboxes(boolean isChecked) {
+    public void checkAll(boolean isChecked) {
     DefaultTableModel model = (DefaultTableModel) tblPromotion.getModel();
     for (int i = 0; i < model.getRowCount(); i++) {
-        model.setValueAt(isChecked, i, 5); // Cột 5 là checkbox
+        model.setValueAt(true, i, 5); // Cột 5 là checkbox
     }
 }
-
-    
-
+    public void UncheckAll(boolean isChecked) {
+    DefaultTableModel model = (DefaultTableModel) tblPromotion.getModel();
+    for (int i = 0; i < model.getRowCount(); i++) {
+        model.setValueAt(false, i, 5); // Cột 5 là checkbox
+    }
+}
 }
