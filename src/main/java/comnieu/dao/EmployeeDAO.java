@@ -12,6 +12,8 @@ import java.util.List;
  * @author Admin
  */
 public interface EmployeeDAO extends CrudDAO<Employee, Integer> {
+    Employee findByUsernameAndGmail(String username, String gmail);
+    Employee findByGmail(String gmail);
     Employee findByUsername(String username);
     List<Employee> findByRole(Integer role);
 }
